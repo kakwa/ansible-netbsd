@@ -1,0 +1,34 @@
+---
+- name: "Check if Let's Encrypt certificate exists for reverse proxy: {{ item.name }}"
+  stat:
+    path: "/usr/pkg/etc/letsencrypt/live/{{ item.domain }}/fullchain.pem"
+  register: letsencrypt_cert_check
+
+- name: "Set use_letsencrypt variable for reverse proxy: {{ item.name }}"
+  set_fact:
+    reverse_proxies: "{{ reverse_proxies | map('combine', {'use_letsencrypt': (letsencrypt_cert_check.stat.exists | default(false)) if item.domain == item.domain else (item.use_letsencrypt | default(false))}) | list }}"
+
+- name: "Create htpasswd file for basic authentication (if enabled) for reverse proxy: {{ item.name }}"
+  htpasswd:
+    path: /usr/pkg/etc/nginx/.htpasswd
+    name: "{{ item.auth_user }}"
+    password: "{{ item.auth_password }}"
+    owner: root
+    group: wheel
+    mode: '0640'
+  when: item.auth_enabled | default(false)
+
+- name: "Create reverse proxy nginx configuration for: {{ item.name }}"
+  template:
+    src: reverse-proxy-nginx.conf.j2
+    dest: "/usr/pkg/etc/nginx/sites-available/{{ item.name }}"
+    owner: root
+    group: wheel
+    mode: '0644'
+  notify: restart nginx
+
+- name: "Enable reverse proxy site: {{ item.name }}"
+  file:
+    src: "/usr/pkg/etc/nginx/sites-available/{{ item.name }}"
+    dest: "/usr/pkg/etc/nginx/sites-enabled/{{ item.name }}"
+    state: link

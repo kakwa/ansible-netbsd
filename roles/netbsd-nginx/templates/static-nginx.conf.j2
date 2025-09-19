@@ -14,7 +14,7 @@ server {
     server_name {{ item.domain }};
 
     # SSL configuration - use Let's Encrypt if available, otherwise self-signed
-    {% if item.use_letsencrypt | default(true) %}
+    {% if letsencrypt_cert_check.stat.exists | default(false) %}
     ssl_certificate /usr/pkg/etc/letsencrypt/live/{{ item.domain }}/fullchain.pem;
     ssl_certificate_key /usr/pkg/etc/letsencrypt/live/{{ item.domain }}/privkey.pem;
     {% else %}
