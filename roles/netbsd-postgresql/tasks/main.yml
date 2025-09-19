@@ -22,7 +22,6 @@
     name: "{{ item.name }}"
     login_user: pgsql
     state: present
-  become_user: pgsql
   loop: "{{ postgresql_databases }}"
   when: postgresql_databases | length > 0
 
@@ -33,6 +32,5 @@
     password: "{{ item.password }}"
     login_db: "{{ item.name }}"
     state: present
-  become_user: pgsql
   loop: "{{ postgresql_databases }}"
   when: postgresql_databases | length > 0
