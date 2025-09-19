@@ -1,0 +1,55 @@
+---
+- name: NetBSD Sparc Server
+  hosts: all
+  roles:
+    - os-release
+    - users
+    - vim
+    - zsh
+    - netbsd-misc-packages
+    - role: netbsd-postgresql
+      vars:
+        postgresql_databases:
+          - name: "ttrss"
+            user: "ttrss"
+            password: "{{ vault_dbttrss_password | default(lookup('password', './ttrss_db.password.txt chars=ascii_letters,digits length=16')) }}"
+    #- netbsd-pkgsrc
+    #- role: netbsd-mdns
+    #  vars:
+    #    avahi_hostname: "netbsd"
+    #    mdns_resolve_ipv4: true
+    #    mdns_resolve_ipv6: false
+    - role: netbsd-nginx
+      vars:
+        static_sites:
+          - name: "lens"
+            domain: "lens.kakwalab.ovh"
+            root: "/var/www/lens"
+            index: "index.html"
+          - name: "sun"
+            domain: "sun.kakwalab.ovh"
+            root: "/var/www/sun"
+            index: "index.html"
+        reverse_proxies:
+          - name: "voron0"
+            domain: "voron0.kakwalab.ovh"
+            upstream: "https://192.168.1.92/"
+            ssl_verify: false
+            auth_enabled: true
+            auth_user: "kakwa"
+            auth_password: "{{ vault_proxy_password | default(lookup('password', './proxy.password.txt chars=ascii_letters,digits length=16')) }}"
+          - name: "ender3"
+            domain: "ender3.kakwalab.ovh"
+            upstream: "https://192.168.1.27/"
+            ssl_verify: false
+            auth_enabled: true
+            auth_user: "kakwa"
+            auth_password: "{{ vault_proxy_password | default(lookup('password', './proxy.password.txt chars=ascii_letters,digits length=16')) }}"
+          - name: "rockrobo"
+            domain: "rockrobo.kakwalab.ovh"
+            upstream: "http://192.168.1.27/"
+            ssl_verify: true
+            auth_enabled: true
+            auth_user: "kakwa"
+            auth_password: "{{ vault_proxy_password | default(lookup('password', './proxy.password.txt chars=ascii_letters,digits length=16')) }}"
+    #- netbsd-ttrss

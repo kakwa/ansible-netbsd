@@ -1,0 +1,8 @@
+- name: Generate os-release file
+  ansible.builtin.template:
+    src: os-release.j2
+    dest: /etc/os-release
+    owner: root
+    group: wheel
+    mode: '0644'
+  when: ansible_os_family == "NetBSD"

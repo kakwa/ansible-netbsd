@@ -1,0 +1,13 @@
+---
+# PostgreSQL packages
+postgresql_packages:
+  - postgresql14-server
+  - postgresql14-client
+
+# PostgreSQL databases configuration
+# List of databases to create, each with name, user, and password
+postgresql_databases: []
+  # Example:
+  # - name: "ttrss"
+  #   user: "ttrss"
+  #   password: "{{ vault_postgresql_password | default('changeme123') }}"

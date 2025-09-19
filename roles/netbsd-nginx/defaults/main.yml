@@ -1,0 +1,32 @@
+---
+# Nginx packages
+nginx_packages:
+  - nginx
+  - py312-certbot-nginx
+  - py312-passlib
+
+# SSL configuration
+ssl_email: "admin@example.com"
+ssl_staging: false
+
+# Static website configurations (empty by default)
+static_sites: []
+
+# Reverse proxy configurations (empty by default)
+reverse_proxies: []
+
+# Default reverse proxy settings
+reverse_proxy_defaults:
+  ssl_verify: true  # Set to false to disable SSL certificate verification for HTTPS backends
+
+# Nginx configuration
+nginx_worker_processes: "auto"
+nginx_worker_connections: 1024
+nginx_keepalive_timeout: 65
+nginx_client_max_body_size: "100M"
+
+# Security settings
+nginx_hide_server_tokens: true
+nginx_ssl_protocols: "TLSv1.2 TLSv1.3"
+nginx_ssl_ciphers: "ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-AES128-SHA256:ECDHE-RSA-AES256-SHA384"
+nginx_ssl_prefer_server_ciphers: "on"

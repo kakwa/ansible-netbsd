@@ -1,0 +1,57 @@
+---
+- name: Create SSL certificates directory
+  file:
+    path: /usr/pkg/etc/nginx/ssl
+    state: directory
+    owner: root
+    group: nginx
+    mode: '0750'
+
+- name: Copy OpenSSL configuration file to nginx SSL directory
+  copy:
+    src: openssl.cnf
+    dest: /usr/pkg/etc/nginx/ssl/openssl.cnf
+    owner: root
+    group: nginx
+    mode: '0644'
+
+- name: Generate self-signed certificate for development
+  command: >
+    openssl req -x509 -nodes -days 365 -newkey rsa:2048
+    -keyout /usr/pkg/etc/nginx/ssl/selfsigned.key
+    -out /usr/pkg/etc/nginx/ssl/selfsigned.crt
+    -subj "/C=US/ST=State/L=City/O=Organization/CN=selfsigned.kakwalab.ovh"
+    -config /usr/pkg/etc/nginx/ssl/openssl.cnf
+  args:
+    creates: /usr/pkg/etc/nginx/ssl/selfsigned.crt
+
+#- name: Request SSL certificates with certbot (production)
+#  command: >
+#    certbot certonly --nginx
+#    --email {{ ssl_email }}
+#    --agree-tos
+#    --no-eff-email
+#    --domains {{ ttrss_domain }},{{ static_domain }}
+#    {% for proxy in reverse_proxies %}
+#    ,{{ proxy.domain }}
+#    {% endfor %}
+#    {% if ssl_staging %}--staging{% endif %}
+#  register: certbot_result
+#  when: ssl_staging == false
+#  ignore_errors: true
+#
+#- name: Request staging SSL certificates with certbot
+#  command: >
+#    certbot certonly --nginx
+#    --email {{ ssl_email }}
+#    --agree-tos
+#    --no-eff-email
+#    --staging
+#    --domains {{ ttrss_domain }},{{ static_domain }}
+#    {% for proxy in reverse_proxies %}
+#    ,{{ proxy.domain }}
+#    {% endfor %}
+#  register: certbot_staging_result
+#  when: ssl_staging == true
+#  ignore_errors: true
+#
