@@ -1,0 +1,3 @@
+[submodule "external/ansible"]
+	path = external/ansible
+	url = https://github.com/kakwa/ansible
