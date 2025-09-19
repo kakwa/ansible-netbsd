@@ -1,0 +1,24 @@
+# Basic OpenSSL configuration for NetBSD
+# This is a minimal configuration file to allow OpenSSL to work
+
+[ req ]
+default_bits = 2048
+prompt = no
+distinguished_name = req_distinguished_name
+req_extensions = v3_req
+
+[ req_distinguished_name ]
+C = US
+ST = State
+L = City
+O = Organization
+CN = localhost
+
+[ v3_req ]
+basicConstraints = CA:FALSE
+keyUsage = nonRepudiation, digitalSignature, keyEncipherment
+subjectAltName = @alt_names
+
+[ alt_names ]
+DNS.1 = localhost
+DNS.2 = *.localhost

@@ -1,0 +1,38 @@
+---
+- name: Install PostgreSQL packages
+  community.general.pkgin:
+    name: "{{ postgresql_packages }}"
+    state: present
+
+- name: Initialize PostgreSQL database
+  command: /etc/rc.d/pgsql oneinitdb
+  args:
+    creates: /usr/pkg/pgsql/data/postgresql.conf
+  become: true
+
+- name: Start & Enable PostgreSQL service
+  ansible.builtin.service:
+    name: pgsql
+    state: started
+    enabled: true
+  become: true
+
+- name: Create PostgreSQL databases
+  postgresql_db:
+    name: "{{ item.name }}"
+    login_user: pgsql
+    state: present
+  become_user: pgsql
+  loop: "{{ postgresql_databases }}"
+  when: postgresql_databases | length > 0
+
+- name: Create PostgreSQL users
+  postgresql_user:
+    login_user: pgsql
+    name: "{{ item.user }}"
+    password: "{{ item.password }}"
+    login_db: "{{ item.name }}"
+    state: present
+  become_user: pgsql
+  loop: "{{ postgresql_databases }}"
+  when: postgresql_databases | length > 0

@@ -1,0 +1,46 @@
+---
+- name: Install nginx and certbot packages
+  community.general.pkgin:
+    name: "{{ nginx_packages }}"
+    state: present
+
+- name: Configure main nginx configuration
+  template:
+    src: nginx.conf.j2
+    dest: /usr/pkg/etc/nginx/nginx.conf
+    owner: root
+    group: wheel
+    mode: '0644'
+  notify: restart nginx
+
+- name: Create nginx sites-available directory
+  file:
+    path: /usr/pkg/etc/nginx/sites-available
+    state: directory
+    owner: root
+    group: wheel
+    mode: '0755'
+
+- name: Create nginx sites-enabled directory
+  file:
+    path: /usr/pkg/etc/nginx/sites-enabled
+    state: directory
+    owner: root
+    group: wheel
+    mode: '0755'
+
+- name: Include SSL certificate tasks
+  include_tasks: setup_ssl.yml
+
+- name: Include static website setup tasks
+  include_tasks: setup_static.yml
+
+- name: Include reverse proxy setup tasks
+  include_tasks: setup_reverse_proxies.yml
+
+- name: Start & Enable nginx service
+  ansible.builtin.service:
+    name: nginx
+    state: started
+    enabled: true
+  become: true

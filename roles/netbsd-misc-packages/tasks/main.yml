@@ -1,0 +1,9 @@
+---
+- name: Install miscellaneous packages
+  community.general.pkgin:
+    name:
+      - tree
+      - rsync
+      - wget
+      - sysupgrade
+    state: present

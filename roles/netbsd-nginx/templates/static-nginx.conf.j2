@@ -1,0 +1,66 @@
+server {
+    listen 80;
+    listen [::]:80;
+    server_name {{ item.domain }};
+
+    # Redirect HTTP to HTTPS
+    return 301 https://$server_name$request_uri;
+}
+
+server {
+    listen 443 ssl;
+    listen [::]:443 ssl;
+    http2 on;
+    server_name {{ item.domain }};
+
+    # SSL configuration - use Let's Encrypt if available, otherwise self-signed
+    {% if item.use_letsencrypt | default(true) %}
+    ssl_certificate /usr/pkg/etc/letsencrypt/live/{{ item.domain }}/fullchain.pem;
+    ssl_certificate_key /usr/pkg/etc/letsencrypt/live/{{ item.domain }}/privkey.pem;
+    {% else %}
+    ssl_certificate /usr/pkg/etc/nginx/ssl/selfsigned.crt;
+    ssl_certificate_key /usr/pkg/etc/nginx/ssl/selfsigned.key;
+    {% endif %}
+
+    # Security headers
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header Referrer-Policy "no-referrer-when-downgrade" always;
+
+    root {{ item.root }};
+    index {{ item.index }} index.html index.htm;
+
+    # Logging
+    access_log /var/log/nginx/{{ item.name }}.log;
+    error_log /var/log/nginx/{{ item.name }}.log;
+
+    # Handle static files with caching
+    location ~* \.(css|js|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+        try_files $uri =404;
+    }
+
+    # Handle HTML files with shorter cache
+    location ~* \.html$ {
+        expires 1h;
+        add_header Cache-Control "public";
+        try_files $uri =404;
+    }
+
+    # Deny access to hidden files
+    location ~ /\. {
+        deny all;
+    }
+
+    # Main location
+    location / {
+        try_files $uri $uri/ =404;
+    }
+
+    # Custom error pages
+    error_page 404 /404.html;
+    error_page 500 502 503 504 /50x.html;
+}
+
