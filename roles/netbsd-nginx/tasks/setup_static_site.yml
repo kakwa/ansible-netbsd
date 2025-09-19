@@ -1,0 +1,79 @@
+- name: Check if Let's Encrypt certificates exist for {{ item.name }}
+  stat:
+    path: "/usr/pkg/etc/letsencrypt/live/{{ item.domain }}/fullchain.pem"
+  register: letsencrypt_cert_check
+
+- name: Create static website directory for {{ item.name }}
+  file:
+    path: "{{ item.root }}"
+    state: directory
+    owner: root
+    group: wheel
+    mode: '0755'
+
+- name: Check if index file exists for {{ item.name }}
+  stat:
+    path: "{{ item.root }}/{{ item.index }}"
+  register: index_check
+
+- name: Create default static website index file for {{ item.name }}
+  copy:
+    content: |
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>{{ item.domain }} - Static Website</title>
+          <style>
+              body {
+                  font-family: Arial, sans-serif;
+                  max-width: 800px;
+                  margin: 0 auto;
+                  padding: 20px;
+                  background-color: #f5f5f5;
+              }
+              .container {
+                  background-color: white;
+                  padding: 30px;
+                  border-radius: 10px;
+                  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+              }
+              h1 {
+                  color: #333;
+                  text-align: center;
+              }
+              p {
+                  color: #666;
+                  line-height: 1.6;
+              }
+          </style>
+      </head>
+      <body>
+          <div class="container">
+              <h1>Welcome to {{ item.domain }}</h1>
+              <p>This is a default static website served by nginx. You can replace this content with your own files.</p>
+              <p>Upload your HTML, CSS, JavaScript, and other static files to this directory to build your website.</p>
+          </div>
+      </body>
+      </html>
+    dest: "{{ item.root }}/{{ item.index }}"
+    owner: root
+    group: wheel
+    mode: '0644'
+  when: not index_check.stat.exists
+
+- name: Create static website nginx configuration for {{ item.name }}
+  template:
+    src: static-nginx.conf.j2
+    dest: "/usr/pkg/etc/nginx/sites-available/{{ item.name }}"
+    owner: root
+    group: wheel
+    mode: '0644'
+  notify: restart nginx
+
+- name: Enable static website site for {{ item.name }}
+  file:
+    src: "/usr/pkg/etc/nginx/sites-available/{{ item.name }}"
+    dest: "/usr/pkg/etc/nginx/sites-enabled/{{ item.name }}"
+    state: link

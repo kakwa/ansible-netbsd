@@ -38,6 +38,12 @@
 - name: Include reverse proxy setup tasks
   include_tasks: setup_reverse_proxies.yml
 
+- name: Validate nginx configuration
+  ansible.builtin.command: nginx -t
+  register: nginx_configtest
+  changed_when: false
+  failed_when: nginx_configtest.rc != 0
+
 - name: Start & Enable nginx service
   ansible.builtin.service:
     name: nginx

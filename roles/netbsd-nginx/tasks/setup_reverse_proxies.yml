@@ -1,42 +1,8 @@
 ---
-- name: Check if Let's Encrypt certificates exist for reverse proxies
-  stat:
-    path: "/usr/pkg/etc/letsencrypt/live/{{ item.domain }}/fullchain.pem"
-  register: letsencrypt_cert_check
+- name: Configure reverse proxy sites
+  include_tasks: setup_reverse_proxy_site.yml
   loop: "{{ reverse_proxies }}"
+  loop_control:
+    extended: true
   when: reverse_proxies is defined
-
-- name: Set use_letsencrypt variable for reverse proxies
-  set_fact:
-    reverse_proxies: "{{ reverse_proxies | map('combine', {'use_letsencrypt': (letsencrypt_cert_check.results | selectattr('item.domain', 'equalto', item.domain) | first).stat.exists | default(false)}) | list }}"
-  loop: "{{ reverse_proxies }}"
-  when: reverse_proxies is defined
-
-- name: Create htpasswd file for basic authentication
-  htpasswd:
-    path: /usr/pkg/etc/nginx/.htpasswd
-    name: "{{ item.auth_user }}"
-    password: "{{ item.auth_password }}"
-    owner: root
-    group: wheel
-    mode: '0640'
-  loop: "{{ reverse_proxies }}"
-  when: item.auth_enabled | default(false)
-
-- name: Create reverse proxy nginx configurations
-  template:
-    src: reverse-proxy-nginx.conf.j2
-    dest: "/usr/pkg/etc/nginx/sites-available/{{ item.name }}"
-    owner: root
-    group: wheel
-    mode: '0644'
-  loop: "{{ reverse_proxies }}"
-  notify: restart nginx
-
-- name: Enable reverse proxy sites
-  file:
-    src: "/usr/pkg/etc/nginx/sites-available/{{ item.name }}"
-    dest: "/usr/pkg/etc/nginx/sites-enabled/{{ item.name }}"
-    state: link
-  loop: "{{ reverse_proxies }}"
 

@@ -4,6 +4,7 @@
     name: nginx
     state: restarted
   become: true
+  when: nginx_configtest is defined and nginx_configtest.rc == 0
 
 - name: reload nginx
   ansible.builtin.service:
