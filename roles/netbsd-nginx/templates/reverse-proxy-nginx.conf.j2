@@ -29,13 +29,13 @@ server {
     add_header Referrer-Policy "no-referrer-when-downgrade" always;
 
     # Logging
-    access_log /var/log/nginx/{{ item.name }}.log;
-    error_log /var/log/nginx/{{ item.name }}.log;
+    access_log /var/log/nginx/{{ item.name }}_access.log;
+    error_log /var/log/nginx/{{ item.name }}_error.log;
 
     # Basic authentication
     {% if item.auth_enabled | default(false) %}
     auth_basic "Restricted Access";
-    auth_basic_user_file /usr/pkg/etc/nginx/.htpasswd;
+    auth_basic_user_file /usr/pkg/etc/nginx/.htpasswd.{{ item.name }};
     {% endif %}
 
     # Proxy settings

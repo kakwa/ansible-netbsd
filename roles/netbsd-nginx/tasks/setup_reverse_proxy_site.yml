@@ -10,11 +10,11 @@
 
 - name: "Create htpasswd file for basic authentication (if enabled) for reverse proxy: {{ item.name }}"
   htpasswd:
-    path: /usr/pkg/etc/nginx/.htpasswd
+    path: "/usr/pkg/etc/nginx/.htpasswd.{{ item.name }}"
     name: "{{ item.auth_user }}"
     password: "{{ item.auth_password }}"
     owner: root
-    group: wheel
+    group: nginx
     mode: '0640'
   when: item.auth_enabled | default(false)
 
