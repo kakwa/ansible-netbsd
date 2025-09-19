@@ -1,6 +1,7 @@
 ---
 - name: NetBSD Sparc Server
   hosts: all
+  become: true
   roles:
     - os-release
     - users
