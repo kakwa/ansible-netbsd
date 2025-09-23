@@ -31,8 +31,10 @@
     owner: root
     group: wheel
     mode: '0644'
+  register: repositories_conf_result
 
 - name: Update repositories index
   community.general.pkgin:
     update_cache: true
+  when: repositories_conf_result.changed
 
