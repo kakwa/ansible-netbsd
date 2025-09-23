@@ -4,6 +4,7 @@
   become: true
   roles:
     - os-release
+    - netbsd-pkgin
     - users
     - vim
     - zsh

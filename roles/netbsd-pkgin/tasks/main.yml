@@ -1,0 +1,38 @@
+- name: Set architecture fact for pkgin
+  set_fact:
+    arch: "{{ ansible_architecture | default(lookup('pipe', 'uname -m')) }}"
+
+- name: Set major version fact for pkgin
+  set_fact:
+    major_version: "{{ ansible_kernel | default(lookup('pipe', 'uname -r')) | regex_replace('\\..*', '') }}"
+
+- name: Get pkgin repository index HTML
+  uri:
+    url: "https://cdn.netbsd.org/pub/pkgsrc/packages/NetBSD/{{ arch }}/"
+    return_content: yes
+  register: repo_index
+
+- name: Extract repository directories for major version
+  set_fact:
+    pkgin_repos: >-
+      {{ repo_index.content | regex_findall('href="([^/]+/)"')
+         | select('match', '^' ~ (major_version | string))
+         | list }}
+
+- name: Build full repository URLs
+  set_fact:
+    pkgin_repo_urls: >-
+      {{ pkgin_repos | map('regex_replace', '^(.*)$', 'https://cdn.netbsd.org/pub/pkgsrc/packages/NetBSD/' ~ arch ~ '/\1All') | list }}
+
+- name: Ensure pkgin repositories.conf is configured
+  template:
+    src: repositories.conf.j2
+    dest: /usr/pkg/etc/pkgin/repositories.conf
+    owner: root
+    group: wheel
+    mode: '0644'
+
+- name: Update repositories index
+  community.general.pkgin:
+    update_cache: true
+
