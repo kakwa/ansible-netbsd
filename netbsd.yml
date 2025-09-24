@@ -6,7 +6,6 @@
     - os-release
     - netbsd-pkgin
     - netbsd-pkgsrc
-    - users
     - vim
     - zsh
     - netbsd-misc-packages
