@@ -27,14 +27,32 @@ server {
     add_header Referrer-Policy "no-referrer-when-downgrade" always;
     add_header Content-Security-Policy "default-src 'self' http: https: data: blob: 'unsafe-inline'" always;
 
-    root /var/www/ttrss;
+    root /usr/pkg/share/tt-rss;
     index index.php index.html;
 
     # Logging
     access_log /var/log/nginx/access/ttrss.log;
     error_log /var/log/nginx/error/ttrss.log;
 
-    # Handle PHP files
+    # Handle FreshAPI plugin with PATH_INFO support
+    location ~ /plugins\.local/.*/api/.*\.php(/|$) {
+        fastcgi_split_path_info ^(.+\.php)(/.+)$;
+        try_files $fastcgi_script_name =404;
+        set $path_info $fastcgi_path_info;
+        fastcgi_param PATH_INFO $path_info;
+        fastcgi_index index.php;
+        fastcgi_pass unix:{{ php_fpm_listen }};
+        include fastcgi_params;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        
+        # Tiny Tiny RSS specific settings
+        fastcgi_param HTTP_PROXY "";
+        fastcgi_read_timeout 300;
+        fastcgi_connect_timeout 300;
+        fastcgi_send_timeout 300;
+    }
+
+    # Handle regular PHP files
     location ~ \.php$ {
         try_files $uri =404;
         fastcgi_split_path_info ^(.+\.php)(/.+)$;
@@ -66,8 +84,10 @@ server {
         deny all;
     }
 
-    # Main location
+    # Main location with authentication
     location / {
+        auth_basic "TT-RSS Access";
+        auth_basic_user_file /usr/pkg/etc/nginx/.htpasswd_ttrss;
         try_files $uri $uri/ /index.php?$query_string;
     }
 }

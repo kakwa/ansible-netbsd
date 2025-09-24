@@ -6,4 +6,5 @@
       - rsync
       - wget
       - sysupgrade
+      - git
     state: present

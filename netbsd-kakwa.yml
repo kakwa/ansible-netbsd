@@ -49,4 +49,11 @@
           - name: "ttrss"
             user: "ttrss"
             password: "{{ vault_dbttrss_password | default(lookup('password', './ttrss_db.password.txt chars=ascii_letters,digits length=16')) }}"
-    - netbsd-ttrss
+    - role: netbsd-ttrss
+      vars:
+        ttrss_domain: "rss.kakwalab.ovh"
+        ttrss_db_name: "ttrss"
+        ttrss_db_user: "ttrss"
+        ttrss_db_password: "{{ vault_dbttrss_password | default(lookup('password', './ttrss_db.password.txt chars=ascii_letters,digits length=16')) }}"
+        ttrss_auth_user: "kakwa"
+        ttrss_auth_password: "{{ vault_proxy_password | default(lookup('password', './proxy.password.txt chars=ascii_letters,digits length=16')) }}"

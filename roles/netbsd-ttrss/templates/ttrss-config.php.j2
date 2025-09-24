@@ -4,12 +4,12 @@
  */
 
 define('DB_TYPE', 'pgsql');
-define('DB_HOST', 'localhost');
-define('DB_NAME', '{{ postgresql_db_name }}');
-define('DB_USER', '{{ postgresql_db_user }}');
-define('DB_PASS', '{{ postgresql_db_password }}');
+define('DB_HOST', '{{ ttrss_db_host }}');
+define('DB_NAME', '{{ ttrss_db_name }}');
+define('DB_USER', '{{ ttrss_db_user }}');
+define('DB_PASS', '{{ ttrss_db_password }}');
 
-define('DB_PORT', '5432');
+define('DB_PORT', '{{ ttrss_db_port }}');
 
 define('SELF_URL_PATH', 'https://{{ ttrss_domain }}/');
 
@@ -19,13 +19,13 @@ define('SINGLE_USER_MODE', {{ ttrss_single_user_mode | lower }});
 
 define('SIMPLE_UPDATE_MODE', false);
 
-define('PHP_EXECUTABLE', '/usr/local/bin/php');
+define('PHP_EXECUTABLE', '/usr/pkg/bin/php');
 
-define('LOCK_DIRECTORY', '/var/www/ttrss/lock');
+define('LOCK_DIRECTORY', '/var/www/ttrss-data/lock');
 
-define('CACHE_DIR', '/var/www/ttrss/cache');
+define('CACHE_DIR', '/var/www/ttrss-data/cache');
 
-define('ICONS_DIR', '/var/www/ttrss/feed-icons');
+define('ICONS_DIR', '/var/www/ttrss-data/feed-icons');
 define('ICONS_URL', 'feed-icons');
 
 define('AUTH_AUTO_CREATE', true);
@@ -54,7 +54,10 @@ define('CHECK_FOR_UPDATES', true);
 
 define('ENABLE_GZIP_OUTPUT', false);
 
-define('PLUGINS', 'auth_internal, note, nfav, bookmarklet');
+define('PLUGINS', 'auth_internal, note, nfav, bookmarklet, freshapi');
+
+// Enable API access for FreshAPI plugin
+define('ENABLE_API_ACCESS', true);
 
 define('LOG_DESTINATION', 'file');
 
@@ -83,6 +86,6 @@ define('CACHE_TTL', 3600);
 
 // Logging
 define('LOG_DESTINATION', 'file');
-define('LOG_FILE', '/var/log/ttrss.log');
+define('LOG_FILE', '/var/log/ttrss/ttrss.log');
 ?>
 
