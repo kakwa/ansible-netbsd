@@ -3,14 +3,15 @@
   hosts: all
   become: true
   roles:
-    - os-release
-    - netbsd-pkgin
-    - netbsd-pkgsrc
-    - vim
-    - zsh
-    - netbsd-misc-packages
-    - netbsd-mdns
+    - { role: os-release, tags: ["system", "os-release"] }
+    - { role: netbsd-pkgin, tags: ["system", "netbsd-pkgin"] }
+    - { role: netbsd-pkgsrc, tags: ["system", "netbsd-pkgsrc"] }
+    - { role: vim, tags: ["system", "vim"] }
+    - { role: zsh, tags: ["system", "zsh"] }
+    - { role: netbsd-misc-packages, tags: ["system", "netbsd-misc-packages"] }
+    - { role: netbsd-mdns, tags: ["system", "netbsd-mdns"] }
     - role: netbsd-nginx
+      tags: ["service", "netbsd-nginx"]
       vars:
         static_sites:
           - name: "lens"
@@ -44,13 +45,16 @@
             auth_user: "kakwa"
             auth_password: "{{ vault_proxy_password | default(lookup('password', './proxy.password.txt chars=ascii_letters,digits length=16')) }}"
     - role: netbsd-postgresql
+      tags: ["service", "netbsd-postgresql"]
       vars:
         postgresql_databases:
           - name: "ttrss"
             user: "ttrss"
             password: "{{ vault_dbttrss_password | default(lookup('password', './ttrss_db.password.txt chars=ascii_letters,digits length=16')) }}"
     - role: netbsd-php
+      tags: ["app", "netbsd-php"]
     - role: netbsd-ttrss
+      tags: ["app", "netbsd-ttrss"]
       vars:
         ttrss_domain: "rss.kakwalab.ovh"
         ttrss_db_name: "ttrss"
