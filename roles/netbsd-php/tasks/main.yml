@@ -46,13 +46,11 @@
     mode: '0644'
   notify: restart php-fpm
 
-- name: Create PHP-FPM socket directory
-  file:
-    path: /var/run/php-fpm
-    state: directory
-    owner: "{{ php_fpm_user }}"
-    group: "{{ php_fpm_group }}"
-    mode: '0755'
+- name: Add nginx user to www group
+  user:
+    name: nginx
+    groups: www
+    append: yes
 
 - name: Start & Enable PHP-FPM service
   ansible.builtin.service:

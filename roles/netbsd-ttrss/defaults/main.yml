@@ -14,3 +14,4 @@ ttrs_db_user: "ttrss"
 ttrs_db_password: "{{ vault_postgresql_password | default('changeme123') }}"
 ttrss_db_host: "localhost"
 ttrss_db_port: 5432
+php_fpm_listen: "/var/run/php-fpm83"
