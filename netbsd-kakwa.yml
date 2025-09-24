@@ -49,6 +49,7 @@
           - name: "ttrss"
             user: "ttrss"
             password: "{{ vault_dbttrss_password | default(lookup('password', './ttrss_db.password.txt chars=ascii_letters,digits length=16')) }}"
+    - role: netbsd-php
     - role: netbsd-ttrss
       vars:
         ttrss_domain: "rss.kakwalab.ovh"

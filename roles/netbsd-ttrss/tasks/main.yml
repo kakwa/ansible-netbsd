@@ -1,55 +1,78 @@
 ---
-- name: Install PHP build dependencies
-  community.general.pkgin:
-    name: "{{ php_packages }}"
-    state: present
 
-- name: Build and install PHP from pkgsrc
+- name: Build and install TT-RSS from pkgsrc
   command: make install
   args:
-    chdir: /usr/pkgsrc/lang/php83
-    creates: /usr/pkg/bin/php83
+    chdir: /usr/pkgsrc/www/php-tt-rss
+    creates: /usr/pkg/share/tt-rss
   become: true
 
-- name: Build and install PHP-FPM from pkgsrc
-  command: make install
-  args:
-    chdir: /usr/pkgsrc/www/php-fpm
-    creates: /usr/pkg/sbin/php-fpm
-  become: true
-
-- name: Configure PHP-FPM pool
-  template:
-    src: php-fpm-pool.conf.j2
-    dest: /usr/pkg/etc/php-fpm.d/www.conf
-    owner: root
-    group: wheel
-    mode: '0644'
-  notify: restart php-fpm
-
-- name: Configure PHP settings
-  template:
-    src: php.ini.j2
-    dest: /usr/pkg/etc/php.ini
-    owner: root
-    group: wheel
-    mode: '0644'
-  notify: restart php-fpm
-
-- name: Create PHP-FPM socket directory
+- name: Create TT-RSS data directories
   file:
-    path: /var/run/php-fpm
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ php_fpm_user }}"
+    group: "{{ php_fpm_group }}"
+    mode: '0755'
+  loop:
+    - /var/www/ttrss-data/cache
+    - /var/www/ttrss-data/lock
+    - /var/www/ttrss-data/feed-icons
+
+- name: Create TT-RSS log directory
+  file:
+    path: /var/log/ttrss
     state: directory
     owner: "{{ php_fpm_user }}"
     group: "{{ php_fpm_group }}"
     mode: '0755'
 
-- name: Start & Enable PHP-FPM service
-  ansible.builtin.service:
-    name: php_fpm
-    state: started
-    enabled: true
-  become: true
+- name: Create TT-RSS configuration file
+  template:
+    src: ttrss-config.php.j2
+    dest: /usr/pkg/share/tt-rss/config.php
+    owner: "{{ php_fpm_user }}"
+    group: "{{ php_fpm_group }}"
+    mode: '0640'
 
-- name: Include Tiny Tiny RSS setup tasks
-  include_tasks: setup_ttrss.yml
+- name: Create TT-RSS htpasswd file for nginx authentication
+  htpasswd:
+    path: /usr/pkg/etc/nginx/.htpasswd_ttrss
+    name: "{{ ttrss_auth_user }}"
+    password: "{{ ttrss_auth_password }}"
+    owner: root
+    group: wheel
+    mode: '0644'
+  notify: restart nginx
+
+- name: Create Tiny Tiny RSS nginx configuration
+  template:
+    src: ttrss-nginx.conf.j2
+    dest: /usr/pkg/etc/nginx/sites-available/ttrss
+    owner: root
+    group: wheel
+    mode: '0644'
+  notify: restart nginx
+
+- name: Enable TT-RSS site
+  file:
+    src: /usr/pkg/etc/nginx/sites-available/ttrss
+    dest: /usr/pkg/etc/nginx/sites-enabled/ttrss
+    state: link
+  notify: restart nginx
+
+- name: Create TT-RSS plugins.local directory
+  file:
+    path: /usr/pkg/share/tt-rss/plugins.local
+    state: directory
+    owner: root
+    group: wheel
+    mode: '0755'
+
+- name: Clone FreshAPI plugin
+  git:
+    repo: https://github.com/eric-pierce/freshapi.git
+    dest: /usr/pkg/share/tt-rss/plugins.local/freshapi
+    version: master
+    force: yes
+  become: true

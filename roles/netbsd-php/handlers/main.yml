@@ -1,0 +1,12 @@
+---
+- name: restart php-fpm
+  ansible.builtin.service:
+    name: php_fpm
+    state: restarted
+  become: true
+
+- name: reload php-fpm
+  ansible.builtin.service:
+    name: php_fpm
+    state: reloaded
+  become: true

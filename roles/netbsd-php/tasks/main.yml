@@ -1,0 +1,52 @@
+---
+- name: Install PHP build dependencies
+  community.general.pkgin:
+    name: "{{ php_packages }}"
+    state: present
+
+- name: Build and install PHP from pkgsrc
+  command: make install
+  args:
+    chdir: /usr/pkgsrc/lang/php83
+    creates: /usr/pkg/bin/php83
+  become: true
+
+- name: Build and install PHP-FPM from pkgsrc
+  command: make install
+  args:
+    chdir: /usr/pkgsrc/www/php-fpm
+    creates: /usr/pkg/sbin/php-fpm83
+  become: true
+
+- name: Configure PHP-FPM pool
+  template:
+    src: php-fpm-pool.conf.j2
+    dest: /usr/pkg/etc/php-fpm.d/www.conf
+    owner: root
+    group: wheel
+    mode: '0644'
+  notify: restart php-fpm
+
+- name: Configure PHP settings
+  template:
+    src: php.ini.j2
+    dest: /usr/pkg/etc/php.ini
+    owner: root
+    group: wheel
+    mode: '0644'
+  notify: restart php-fpm
+
+- name: Create PHP-FPM socket directory
+  file:
+    path: /var/run/php-fpm
+    state: directory
+    owner: "{{ php_fpm_user }}"
+    group: "{{ php_fpm_group }}"
+    mode: '0755'
+
+- name: Start & Enable PHP-FPM service
+  ansible.builtin.service:
+    name: php_fpm
+    state: started
+    enabled: true
+  become: true

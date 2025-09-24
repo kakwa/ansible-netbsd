@@ -1,19 +1,4 @@
 ---
-# PHP and TTRSS packages
-php_packages:
-  - libxml2
-  - perl
-  - gmake
-  - m4
-  - libtool-base
-  - autoconf
-  - mktools
-  - pkgconf
-  - cwrappers
-  - pcre2
-  - readline
-  - git
-
 # Domain configurations
 ttrss_domain: "ttrss.example.com"
 
@@ -23,35 +8,9 @@ ttrss_admin_password: "{{ vault_ttrss_admin_password | default('admin123') }}"
 ttrss_admin_email: "admin@example.com"
 ttrss_single_user_mode: false
 
-# PHP-FPM configuration
-php_fpm_pool: "fpm"
-php_fpm_user: "fpm"
-php_fpm_group: "www"
-php_fpm_listen: "/var/run/php-fpm/php-fpm.sock"
-php_fpm_pm_max_children: 50
-php_fpm_pm_start_servers: 5
-php_fpm_pm_min_spare_servers: 5
-php_fpm_pm_max_spare_servers: 35
-
 # Database connection (for TTRSS)
-ttrss_db_name: "ttrss"
-ttrss_db_user: "ttrss"
-ttrss_db_password: "{{ vault_dbttrss_password | default(lookup('password', './ttrss_db.password.txt chars=ascii_letters,digits length=16')) }}"
+ttrs_db_name: "ttrss"
+ttrs_db_user: "ttrss"
+ttrs_db_password: "{{ vault_postgresql_password | default('changeme123') }}"
 ttrss_db_host: "localhost"
 ttrss_db_port: 5432
-
-# TT-RSS Authentication (same as reverse proxy auth)
-ttrss_auth_user: "admin"
-ttrss_auth_password: "{{ vault_proxy_password | default(lookup('password', './proxy.password.txt chars=ascii_letters,digits length=16')) }}"
-
-# FreshAPI Configuration
-freshapi_enabled: true
-freshapi_db_user: "freshapi"
-freshapi_db_password: "{{ vault_freshapi_password | default(lookup('password', './freshapi.password.txt chars=ascii_letters,digits length=16')) }}"
-
-# Legacy variables for backward compatibility
-postgresql_db_name: "{{ ttrss_db_name }}"
-postgresql_db_user: "{{ ttrss_db_user }}"
-postgresql_db_password: "{{ ttrss_db_password }}"
-postgresql_host: "{{ ttrss_db_host }}"
-postgresql_port: "{{ ttrss_db_port }}"
