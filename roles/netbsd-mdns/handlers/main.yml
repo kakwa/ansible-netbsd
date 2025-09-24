@@ -1,0 +1,6 @@
+---
+- name: restart mdnsd
+  ansible.builtin.service:
+    name: mdnsd
+    state: restarted
+  become: true

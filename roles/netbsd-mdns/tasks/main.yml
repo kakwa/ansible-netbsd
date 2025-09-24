@@ -1,0 +1,26 @@
+---
+- name: Enable mdnsd in rc.conf
+  ansible.builtin.lineinfile:
+    path: /etc/rc.conf
+    line: 'mdnsd=YES'
+    regexp: '^mdnsd='
+    state: present
+    backup: yes
+  notify: restart mdnsd
+  become: true
+
+- name: Add mdnsd to hosts database in nsswitch.conf
+  ansible.builtin.replace:
+    path: /etc/nsswitch.conf
+    regexp: '^(hosts.*files\s+dns)(\s*)$'
+    replace: '\1 mdnsd\2'
+    backup: yes
+  notify: restart mdnsd
+  become: true
+
+- name: Start and enable mdnsd service
+  ansible.builtin.service:
+    name: mdnsd
+    state: started
+    enabled: true
+  become: true

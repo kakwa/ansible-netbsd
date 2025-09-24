@@ -5,22 +5,12 @@
   roles:
     - os-release
     - netbsd-pkgin
+    - netbsd-pkgsrc
     - users
     - vim
     - zsh
     - netbsd-misc-packages
-    - role: netbsd-postgresql
-      vars:
-        postgresql_databases:
-          - name: "ttrss"
-            user: "ttrss"
-            password: "{{ vault_dbttrss_password | default(lookup('password', './ttrss_db.password.txt chars=ascii_letters,digits length=16')) }}"
-    #- netbsd-pkgsrc
-    #- role: netbsd-mdns
-    #  vars:
-    #    avahi_hostname: "netbsd"
-    #    mdns_resolve_ipv4: true
-    #    mdns_resolve_ipv6: false
+    - netbsd-mdns
     - role: netbsd-nginx
       vars:
         static_sites:
@@ -54,4 +44,10 @@
             auth_enabled: true
             auth_user: "kakwa"
             auth_password: "{{ vault_proxy_password | default(lookup('password', './proxy.password.txt chars=ascii_letters,digits length=16')) }}"
-    #- netbsd-ttrss
+    - role: netbsd-postgresql
+      vars:
+        postgresql_databases:
+          - name: "ttrss"
+            user: "ttrss"
+            password: "{{ vault_dbttrss_password | default(lookup('password', './ttrss_db.password.txt chars=ascii_letters,digits length=16')) }}"
+    - netbsd-ttrss
