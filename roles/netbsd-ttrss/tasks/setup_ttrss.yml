@@ -1,0 +1,19 @@
+---
+
+- name: Build and install TT-RSS from pkgsrc
+  command: make install
+  args:
+    chdir: /usr/pkgsrc/www/php-tt-rss
+    creates: /usr/pkg/share/tt-rss
+  become: true
+
+- name: Create Tiny Tiny RSS nginx configuration
+  template:
+    src: ttrss-nginx.conf.j2
+    dest: /usr/pkg/etc/nginx/sites-available/ttrss
+    owner: root
+    group: wheel
+    mode: '0644'
+  notify: restart nginx
+
+

@@ -1,0 +1,41 @@
+---
+# PHP and TTRSS packages
+php_packages:
+  - libxml2
+  - php83
+  - perl
+  - gmake
+  - m4
+  - libtool-base
+  - autoconf
+  - mktools
+  - pkgconf
+  - cwrappers
+  - pcre2
+  - readline
+
+# Domain configurations
+ttrss_domain: "ttrss.example.com"
+
+# Tiny Tiny RSS configuration
+ttrss_admin_user: "admin"
+ttrss_admin_password: "{{ vault_ttrss_admin_password | default('admin123') }}"
+ttrss_admin_email: "admin@example.com"
+ttrss_single_user_mode: false
+
+# PHP-FPM configuration
+php_fpm_pool: "fpm"
+php_fpm_user: "fpm"
+php_fpm_group: "www"
+php_fpm_listen: "/var/run/php-fpm/php-fpm.sock"
+php_fpm_pm_max_children: 50
+php_fpm_pm_start_servers: 5
+php_fpm_pm_min_spare_servers: 5
+php_fpm_pm_max_spare_servers: 35
+
+# Database connection (for TTRSS)
+postgresql_db_name: "ttrss"
+postgresql_db_user: "ttrss"
+postgresql_db_password: "{{ vault_postgresql_password | default('changeme123') }}"
+postgresql_host: "localhost"
+postgresql_port: 5432

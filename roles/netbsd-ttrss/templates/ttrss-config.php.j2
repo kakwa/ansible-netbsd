@@ -1,0 +1,88 @@
+<?php
+/*
+ * Tiny Tiny RSS configuration file
+ */
+
+define('DB_TYPE', 'pgsql');
+define('DB_HOST', 'localhost');
+define('DB_NAME', '{{ postgresql_db_name }}');
+define('DB_USER', '{{ postgresql_db_user }}');
+define('DB_PASS', '{{ postgresql_db_password }}');
+
+define('DB_PORT', '5432');
+
+define('SELF_URL_PATH', 'https://{{ ttrss_domain }}/');
+
+define('FEED_CRYPT_KEY', '{{ ansible_date_time.epoch | random | string }}');
+
+define('SINGLE_USER_MODE', {{ ttrss_single_user_mode | lower }});
+
+define('SIMPLE_UPDATE_MODE', false);
+
+define('PHP_EXECUTABLE', '/usr/local/bin/php');
+
+define('LOCK_DIRECTORY', '/var/www/ttrss/lock');
+
+define('CACHE_DIR', '/var/www/ttrss/cache');
+
+define('ICONS_DIR', '/var/www/ttrss/feed-icons');
+define('ICONS_URL', 'feed-icons');
+
+define('AUTH_AUTO_CREATE', true);
+define('AUTH_AUTO_LOGIN', false);
+
+define('FORCE_ARTICLE_PURGE', 0);
+
+define('SPHINX_SERVER', 'localhost:9312');
+
+define('SPHINX_INDEX', 'ttrss, delta');
+
+define('ENABLE_REGISTRATION', false);
+define('REG_NOTIFY_ADDRESS', '{{ ttrss_admin_email }}');
+define('REG_MAX_USERS', 10);
+
+define('SESSION_COOKIE_LIFETIME', 86400);
+
+define('SMTP_FROM_NAME', 'Tiny Tiny RSS');
+define('SMTP_FROM_ADDRESS', '{{ ttrss_admin_email }}');
+
+define('DIGEST_SUBJECT', '[tt-rss] New headlines for {{ ttrss_domain }}');
+
+define('DIGEST_SENDER_ADDRESS', '{{ ttrss_admin_email }}');
+
+define('CHECK_FOR_UPDATES', true);
+
+define('ENABLE_GZIP_OUTPUT', false);
+
+define('PLUGINS', 'auth_internal, note, nfav, bookmarklet');
+
+define('LOG_DESTINATION', 'file');
+
+define('CONFIG_VERSION', 26);
+
+// Admin user configuration
+define('ADMIN_USER', '{{ ttrss_admin_user }}');
+define('ADMIN_PASSWORD', '{{ ttrss_admin_password }}');
+define('ADMIN_EMAIL', '{{ ttrss_admin_email }}');
+
+// Security settings
+define('ALLOW_UNSAFE_AJAX', false);
+define('ALLOW_UNSAFE_FEEDS', false);
+
+// Performance settings
+define('DAEMON_UPDATE_LOGIN_LIMIT', 30);
+define('DAEMON_FEED_LIMIT', 500);
+define('DAEMON_SLEEP_INTERVAL', 60);
+
+// File upload settings
+define('FILE_UPLOAD_MAX_SIZE', 10485760); // 10MB
+
+// Cache settings
+define('CACHE_ENABLE', true);
+define('CACHE_TTL', 3600);
+
+// Logging
+define('LOG_DESTINATION', 'file');
+define('LOG_FILE', '/var/log/ttrss.log');
+?>
+
