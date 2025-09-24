@@ -1,0 +1,34 @@
+---
+- name: NetBSD Sparc Server
+  hosts: all
+  become: true
+  roles:
+    - os-release
+    - netbsd-pkgin
+    - netbsd-pkgsrc
+    - vim
+    - zsh
+    - netbsd-misc-packages
+    - netbsd-mdns
+    - role: netbsd-nginx
+      vars:
+        static_sites:
+          - name: "mysite"
+            domain: "www.example.com"
+            root: "/var/www/mysite"
+            index: "index.html"
+        reverse_proxies:
+          - name: "myapp"
+            domain: "app.example.com"
+            upstream: "http://192.168.1.100:8080/"
+            ssl_verify: false
+            auth_enabled: true
+            auth_user: "admin"
+            auth_password: "{{ vault_proxy_password | default(lookup('password', './proxy.password.txt chars=ascii_letters,digits length=16')) }}"
+    - role: netbsd-postgresql
+      vars:
+        postgresql_databases:
+          - name: "ttrss"
+            user: "ttrss"
+            password: "{{ vault_dbttrss_password | default(lookup('password', './ttrss_db.password.txt chars=ascii_letters,digits length=16')) }}"
+    - netbsd-ttrss
