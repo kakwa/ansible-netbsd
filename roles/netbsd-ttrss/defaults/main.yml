@@ -2,7 +2,6 @@
 # PHP and TTRSS packages
 php_packages:
   - libxml2
-  - php83
   - perl
   - gmake
   - m4
