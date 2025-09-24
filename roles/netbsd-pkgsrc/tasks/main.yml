@@ -12,15 +12,15 @@
   become: true
   when: not pkgsrc_exists.stat.exists
 
-- name: Update pkgsrc with CVS if already present
-  shell: |
-    cd {{ pkgsrc_extract_path }} && cvs update -dP
-  become: true
-  when: pkgsrc_exists.stat.exists
-
-- name: Update vulnerabilities DB
-  shell: |
-    /usr/pkg/sbin/pkg_admin -K /usr/pkg/pkgdb fetch-pkg-vulnerabilities
-  args:
-    creates: "/usr/pkg/pkgdb/"
-  become: true
+#- name: Update pkgsrc with CVS if already present
+#  shell: |
+#    cd {{ pkgsrc_extract_path }} && cvs update -dP
+#  become: true
+#  when: pkgsrc_exists.stat.exists
+#
+#- name: Update vulnerabilities DB
+#  shell: |
+#    /usr/pkg/sbin/pkg_admin -K /usr/pkg/pkgdb fetch-pkg-vulnerabilities
+#  args:
+#    creates: "/usr/pkg/pkgdb/"
+#  become: true
