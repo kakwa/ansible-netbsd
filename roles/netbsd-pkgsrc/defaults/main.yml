@@ -1,0 +1,10 @@
+---
+# pkgsrc configuration
+pkgsrc_url: "https://cdn.NetBSD.org/pub/pkgsrc/current/pkgsrc.tar.gz"
+pkgsrc_destination: "/usr"
+pkgsrc_extract_path: "/usr/pkgsrc"
+pkgsrc_archive_name: "pkgsrc.tar.gz"
+
+# Cleanup options
+pkgsrc_cleanup_archive: true  # Remove the downloaded archive after extraction
+pkgsrc_force_download: false  # Force re-download even if pkgsrc already exists
