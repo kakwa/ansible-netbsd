@@ -25,6 +25,16 @@
     name: "{{ postgresql_packages }}"
     state: present
 
+- name: Install pgsql init script
+  ansible.builtin.copy:
+    src: /usr/pkg/share/examples/rc.d/pgsql
+    dest: /etc/rc.d/pgsql
+    owner: root
+    group: wheel
+    mode: '0755'
+    remote_src: true
+    force: false
+
 - name: Initialize PostgreSQL database
   command: /etc/rc.d/pgsql oneinitdb
   args:

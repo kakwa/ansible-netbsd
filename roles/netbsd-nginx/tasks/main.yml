@@ -4,6 +4,16 @@
     name: "{{ nginx_packages }}"
     state: present
 
+- name: Install nginx init script
+  ansible.builtin.copy:
+    src: /usr/pkg/share/examples/rc.d/nginx
+    dest: /etc/rc.d/nginx
+    owner: root
+    group: wheel
+    mode: '0755'
+    remote_src: true
+    force: false
+
 - name: Configure main nginx configuration
   template:
     src: nginx.conf.j2

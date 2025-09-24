@@ -18,6 +18,16 @@
     creates: /usr/pkg/sbin/php-fpm83
   become: true
 
+- name: Install php_fpm83 init script
+  ansible.builtin.copy:
+    src: /usr/pkg/share/examples/rc.d/php_fpm83
+    dest: /etc/rc.d/php_fpm
+    owner: root
+    group: wheel
+    mode: '0755'
+    remote_src: true
+    force: false
+
 - name: Configure PHP-FPM pool
   template:
     src: php-fpm-pool.conf.j2
@@ -50,3 +60,5 @@
     state: started
     enabled: true
   become: true
+
+
