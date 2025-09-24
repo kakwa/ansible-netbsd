@@ -45,7 +45,12 @@
     mode: '0644'
   notify: restart nginx
 
-- name: Create Tiny Tiny RSS nginx configuration
+- name: Check if Let's Encrypt certificate exists for ttrss
+  stat:
+    path: "/usr/pkg/etc/letsencrypt/live/{{ ttrss_domain }}/fullchain.pem"
+  register: letsencrypt_cert_check
+
+- name: Create TT-RSS nginx configuration
   template:
     src: ttrss-nginx.conf.j2
     dest: /usr/pkg/etc/nginx/sites-available/ttrss

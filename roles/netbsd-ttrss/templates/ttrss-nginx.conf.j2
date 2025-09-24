@@ -12,13 +12,14 @@ server {
     listen [::]:443 ssl http2;
     server_name {{ ttrss_domain }};
 
-    # SSL configuration
-    ssl_certificate /usr/local/etc/letsencrypt/live/{{ ttrss_domain }}/fullchain.pem;
-    ssl_certificate_key /usr/local/etc/letsencrypt/live/{{ ttrss_domain }}/privkey.pem;
-    
-    # Fallback to self-signed certificate if Let's Encrypt is not available
-    ssl_certificate /usr/local/etc/nginx/ssl/selfsigned.crt;
-    ssl_certificate_key /usr/local/etc/nginx/ssl/selfsigned.key;
+    # SSL configuration - use Let's Encrypt if available, otherwise self-signed
+    {% if letsencrypt_cert_check.stat.exists | default(false) %}
+    ssl_certificate /usr/pkg/etc/letsencrypt/live/{{ ttrss_domain }}/fullchain.pem;
+    ssl_certificate_key /usr/pkg/etc/letsencrypt/live/{{ ttrss_domain }}/privkey.pem;
+    {% else %}
+    ssl_certificate /usr/pkg/etc/nginx/ssl/selfsigned.crt;
+    ssl_certificate_key /usr/pkg/etc/nginx/ssl/selfsigned.key;
+    {% endif %}
 
     # Security headers
     add_header X-Frame-Options "SAMEORIGIN" always;
@@ -31,8 +32,8 @@ server {
     index index.php index.html;
 
     # Logging
-    access_log /var/log/nginx/access/ttrss.log;
-    error_log /var/log/nginx/error/ttrss.log;
+    access_log /var/log/nginx/ttrss_access.log;
+    error_log /var/log/nginx/ttrss_error.log;
 
     # Handle FreshAPI plugin with PATH_INFO support
     location ~ /plugins\.local/.*/api/.*\.php(/|$) {
