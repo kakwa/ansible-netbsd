@@ -18,10 +18,8 @@ php_packages:
 php_fpm_pool: "fpm"
 php_fpm_user: "fpm"
 php_fpm_group: "www"
-php_fpm_listen: "/var/run/php-fpm/php-fpm.sock"
+php_fpm_listen: "/var/run/php-fpm83"
 php_fpm_pm_max_children: 50
 php_fpm_pm_start_servers: 5
 php_fpm_pm_min_spare_servers: 5
 php_fpm_pm_max_spare_servers: 35
-
-
