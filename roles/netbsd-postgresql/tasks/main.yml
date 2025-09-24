@@ -1,4 +1,25 @@
 ---
+- name: Workaround || symlink libicudata.so.75 to libicudata.so.77 if needed
+  file:
+    src: /usr/pkg/lib/libicudata.so.77
+    dest: /usr/pkg/lib/libicudata.so.75
+    state: link
+  when: icu_symlink_workaround | default(false)
+
+- name: Workaround || symlink libicuuc.so.75 to libicuuc.so.77 if needed
+  file:
+    src: /usr/pkg/lib/libicuuc.so.77
+    dest: /usr/pkg/lib/libicuuc.so.75
+    state: link
+  when: icu_symlink_workaround | default(false)
+
+- name: Workaround || symlink libicui18n.so.75 to libicui18n.so.77 if needed
+  file:
+    src: /usr/pkg/lib/libicui18n.so.77
+    dest: /usr/pkg/lib/libicui18n.so.75
+    state: link
+  when: icu_symlink_workaround | default(false)
+
 - name: Install PostgreSQL packages
   community.general.pkgin:
     name: "{{ postgresql_packages }}"

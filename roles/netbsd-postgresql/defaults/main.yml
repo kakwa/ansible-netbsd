@@ -1,8 +1,9 @@
 ---
 # PostgreSQL packages
 postgresql_packages:
-  - postgresql14-server
-  - postgresql14-client
+  - postgresql16-server
+  - postgresql16-client
+  - py312-psycopg2
 
 # PostgreSQL databases configuration
 # List of databases to create, each with name, user, and password
