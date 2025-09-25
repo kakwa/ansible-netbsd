@@ -8,9 +8,11 @@ server {
 }
 
 server {
-    listen 443 ssl http2;
-    listen [::]:443 ssl http2;
+    listen 443 ssl;
+    listen [::]:443 ssl;
     server_name {{ freshrss_domain }};
+
+    http2 on;
 
     # SSL configuration - use Let's Encrypt if available, otherwise self-signed
     {% if freshrss_domain in letsencrypt_available_certs %}
@@ -24,96 +26,69 @@ server {
     ssl_certificate_key /usr/pkg/etc/nginx/ssl/selfsigned.key;
     {% endif %}
 
-    # Security headers
-    add_header X-Frame-Options "SAMEORIGIN" always;
-    add_header X-XSS-Protection "1; mode=block" always;
-    add_header X-Content-Type-Options "nosniff" always;
-    add_header Referrer-Policy "no-referrer-when-downgrade" always;
-    add_header Content-Security-Policy "default-src 'self' http: https: data: blob: 'unsafe-inline' 'unsafe-eval'" always;
+    # Security headers (adjust to your liking)
+    add_header X-Frame-Options SAMEORIGIN;
+    add_header X-Content-Type-Options nosniff;
+    add_header Referrer-Policy no-referrer-when-downgrade;
+    add_header X-XSS-Protection "1; mode=block";
 
+    # Root directory and index files
     root /usr/pkg/share/freshrss/p;
-    index index.php index.html;
+    index index.php;
+
+    # Client settings
+    client_max_body_size 16M;
+    client_body_buffer_size 128k;
 
     # Logging
     access_log /var/log/nginx/freshrss_access.log;
     error_log /var/log/nginx/freshrss_error.log;
 
-    # Handle API endpoints
-    location ~ ^/api/ {
-        try_files $uri $uri/ /index.php?$query_string;
-        fastcgi_split_path_info ^(.+\.php)(/.+)$;
-        fastcgi_pass unix:{{ php_fpm_listen }};
-        fastcgi_index index.php;
-        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
-        include fastcgi_params;
-        
-        # FreshRSS specific settings
-        fastcgi_param HTTP_PROXY "";
-        fastcgi_read_timeout 300;
-        fastcgi_connect_timeout 300;
-        fastcgi_send_timeout 300;
-    }
+    # Gzip compression
+    gzip on;
+    gzip_vary on;
+    gzip_min_length 1024;
+    gzip_proxied any;
+    gzip_comp_level 6;
+    gzip_types
+        text/plain
+        text/css
+        text/xml
+        text/javascript
+        application/javascript
+        application/xml+rss
+        application/json;
 
-    # Handle regular PHP files
-    location ~ \.php$ {
-        try_files $uri =404;
-        fastcgi_split_path_info ^(.+\.php)(/.+)$;
-        fastcgi_pass unix:{{ php_fpm_listen }};
-        fastcgi_index index.php;
-        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
-        include fastcgi_params;
-        
-        # FreshRSS specific settings
-        fastcgi_param HTTP_PROXY "";
-        fastcgi_read_timeout 300;
-        fastcgi_connect_timeout 300;
-        fastcgi_send_timeout 300;
-    }
-
-    # Handle static files with caching
-    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2)$ {
-        expires 1y;
-        add_header Cache-Control "public, immutable";
-        try_files $uri =404;
-    }
-
-    # Deny access to sensitive files and directories
-    location ~ /\. {
-        deny all;
-    }
-
-    location ~ ^/(data|cache|logs)/ {
-        deny all;
-    }
-
-    location ~ /(?:README|LICENSE|CHANGELOG|\.md$) {
-        deny all;
-    }
-
-    # Handle favicons
-    location /favicon.ico {
-        try_files $uri /i/favicon.ico;
-    }
-
-    # Handle FreshRSS specific paths
-    location /i/ {
-        try_files $uri =404;
-    }
-
-    location /f.php {
-        try_files $uri =404;
-        fastcgi_split_path_info ^(.+\.php)(/.+)$;
-        fastcgi_pass unix:{{ php_fpm_listen }};
-        fastcgi_index index.php;
-        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
-        include fastcgi_params;
-        fastcgi_param HTTP_PROXY "";
-    }
-
-    # Main location with authentication
     location / {
+        try_files $uri $uri/ /index.php?$args;
+    }
+
+    location ~ \.php$ {
         auth_basic "FreshRSS Access";
         auth_basic_user_file /usr/pkg/etc/nginx/.htpasswd_freshrss;
-        try_files $uri $uri/ /index.php?$query_string;
+
+	# regex to split $uri to $fastcgi_script_name and $fastcgi_path
+	fastcgi_split_path_info ^(.+\.php)(/.+)$;
+	# Check that the PHP script exists before passing it
+	try_files $fastcgi_script_name =404;
+	# Bypass the fact that try_files resets $fastcgi_path_info
+	set $path_info $fastcgi_path_info;
+	fastcgi_param PATH_INFO       $path_info;
+	fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+
+	# Include the standard fastcgi parameters
+        fastcgi_pass unix:/var/run/php-fpm83;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+	include fastcgi_params;
+    }
+
+    location ~* \.(?:ico|css|js|gif|jpe?g|png|woff2?|eot|ttf|svg|mp4|ogg|webm)$ {
+        expires 6M;
+        access_log off;
+        add_header Cache-Control "public";
+    }
+
+    location ~ /\. {
+        deny all;
     }
 }

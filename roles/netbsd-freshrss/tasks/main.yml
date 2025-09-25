@@ -11,6 +11,13 @@
       - libzip
     state: present
 
+- name: Build and install php-curl
+  command: make install
+  args:
+    chdir: /usr/pkgsrc/www/php-curl/
+    creates: /usr/pkg/share/examples/php/8.3/curl.ini
+  become: true
+
 - name: Create pkgsrc overlay directory
   file:
     path: /usr/pkgsrc/overlay
