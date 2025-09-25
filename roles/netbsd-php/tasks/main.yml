@@ -21,8 +21,15 @@
 - name: Build and install PHP-PDO from pkgsrc
   command: make install
   args:
+    chdir: /usr/pkgsrc/databases/php-pdo
+    creates: /usr/pkg/share/examples/php/8.3/pdo.ini
+  become: true
+
+- name: Build and install PHP-PDO from pkgsrc
+  command: make install
+  args:
     chdir: /usr/pkgsrc/databases/php-pdo_pgsql
-    creates: /usr/pkg/include/php/8.3/ext/pdo/php_pdo.h
+    creates: /usr/pkg/etc/php/8.3/php.d/pdo_pgsql.ini
   become: true
 
 - name: Build and install PHP-INT from pkgsrc

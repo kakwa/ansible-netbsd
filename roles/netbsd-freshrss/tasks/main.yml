@@ -1,5 +1,16 @@
 ---
 
+- name: Install FreshRSS build dependencies
+  community.general.pkgin:
+    name:
+      - meson
+      - curl
+      - cmake
+      - bison
+      - re2c
+      - libzip
+    state: present
+
 - name: Create pkgsrc overlay directory
   file:
     path: /usr/pkgsrc/overlay
