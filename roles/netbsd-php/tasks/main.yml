@@ -39,6 +39,24 @@
     creates: /usr/pkg/share/examples/php/8.3/intl.ini
   become: true
 
+- name: Install FreshRSS build dependencies
+  community.general.pkgin:
+    name:
+      - meson
+      - curl
+      - cmake
+      - bison
+      - re2c
+      - libzip
+    state: present
+
+- name: Build and install php-curl
+  command: make install
+  args:
+    chdir: /usr/pkgsrc/www/php-curl/
+    creates: /usr/pkg/share/examples/php/8.3/curl.ini
+  become: true
+
 - name: Install php_fpm83 init script
   ansible.builtin.copy:
     src: /usr/pkg/share/examples/rc.d/php_fpm83
