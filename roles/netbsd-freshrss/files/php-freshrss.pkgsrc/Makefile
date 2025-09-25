@@ -52,8 +52,8 @@ PKG_GROUPS_VARS=	APACHE_GROUP
 FILES_SUBST+=	WWWGRP=${APACHE_GROUP} WWWOWN=${APACHE_USER} \
 		FRESHRSS_DIR=${FRESHRSS_DIR}
 
-CONF_FILES_PERMS=	${PREFIX}/share/freshrss/data/config.default.php \
-			${PREFIX}/share/freshrss/data/config.php \
+CONF_FILES_PERMS=	${PREFIX}/share/freshrss/config.default.php \
+			${PREFIX}/share/freshrss/config.php \
 			${APACHE_USER} ${APACHE_GROUP} 640
 
 do-install:
