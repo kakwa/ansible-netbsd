@@ -1,9 +1,26 @@
 ---
 
-- name: Build and install TT-RSS from pkgsrc
+- name: Create pkgsrc overlay directory
+  file:
+    path: /usr/pkgsrc/overlay
+    state: directory
+    mode: '0755'
+  become: true
+
+- name: Copy php-tt-rss pkgsrc files to remote server
+  copy:
+    src: php-tt-rss.pkgsrc/
+    dest: /usr/pkgsrc/overlay/php-tt-rss/
+    owner: root
+    group: wheel
+    mode: '0644'
+    directory_mode: '0755'
+  become: true
+
+- name: Build and install TT-RSS from overlay pkgsrc
   command: make install
   args:
-    chdir: /usr/pkgsrc/www/php-tt-rss
+    chdir: /usr/pkgsrc/overlay/php-tt-rss
     creates: /usr/pkg/share/tt-rss
   become: true
 
