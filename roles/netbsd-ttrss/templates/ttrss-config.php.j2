@@ -3,70 +3,68 @@
  * Tiny Tiny RSS configuration file
  */
 
-define('DB_TYPE', 'pgsql');
-define('DB_HOST', '{{ ttrss_db_host }}');
-define('DB_NAME', '{{ ttrss_db_name }}');
-define('DB_USER', '{{ ttrss_db_user }}');
-define('DB_PASS', '{{ ttrss_db_password }}');
+putenv('TTRSS_DB_TYPE=pgsql');
+putenv('TTRSS_DB_HOST={{ ttrss_db_host }}');
+putenv('TTRSS_DB_NAME={{ ttrss_db_name }}');
+putenv('TTRSS_DB_USER={{ ttrss_db_user }}');
+putenv('TTRSS_DB_PASS={{ ttrss_db_password }}');
 
-define('DB_PORT', '{{ ttrss_db_port }}');
+putenv('TTRSS_DB_PORT={{ ttrss_db_port }}');
 
-define('SELF_URL_PATH', 'https://{{ ttrss_domain }}/');
+putenv('TTRSS_SELF_URL_PATH=https://{{ ttrss_domain }}/');
 
-define('FEED_CRYPT_KEY', '{{ ansible_date_time.epoch | random | string }}');
+putenv('TTRSS_FEED_CRYPT_KEY={{ ansible_date_time.epoch | random | string }}');
 
 define('SINGLE_USER_MODE', {{ ttrss_single_user_mode | lower }});
 
 define('SIMPLE_UPDATE_MODE', false);
 
-define('PHP_EXECUTABLE', '/usr/pkg/bin/php');
+putenv('TTRSS_PHP_EXECUTABLE=/usr/pkg/bin/php');
 
-define('LOCK_DIRECTORY', '/var/www/ttrss-data/lock');
+putenv('TTRSS_LOCK_DIRECTORY=/var/www/ttrss-data/lock');
 
-define('CACHE_DIR', '/var/www/ttrss-data/cache');
+putenv('TTRSS_CACHE_DIR=/var/www/ttrss-data/cache');
 
-define('ICONS_DIR', '/var/www/ttrss-data/feed-icons');
-define('ICONS_URL', 'feed-icons');
+putenv('TTRSS_ICONS_DIR=/var/www/ttrss-data/feed-icons');
+putenv('TTRSS_ICONS_URL=feed-icons');
 
 define('AUTH_AUTO_CREATE', true);
 define('AUTH_AUTO_LOGIN', false);
 
 define('FORCE_ARTICLE_PURGE', 0);
 
-define('SPHINX_SERVER', 'localhost:9312');
+putenv('TTRSS_SPHINX_SERVER=localhost:9312');
 
-define('SPHINX_INDEX', 'ttrss, delta');
+putenv('TTRSS_SPHINX_INDEX=ttrss, delta');
 
 define('ENABLE_REGISTRATION', false);
-define('REG_NOTIFY_ADDRESS', '{{ ttrss_admin_email }}');
+putenv('TTRSS_REG_NOTIFY_ADDRESS={{ ttrss_admin_email }}');
 define('REG_MAX_USERS', 10);
 
 define('SESSION_COOKIE_LIFETIME', 86400);
 
-define('SMTP_FROM_NAME', 'Tiny Tiny RSS');
-define('SMTP_FROM_ADDRESS', '{{ ttrss_admin_email }}');
+putenv('TTRSS_SMTP_FROM_NAME=Tiny Tiny RSS');
+putenv('TTRSS_SMTP_FROM_ADDRESS={{ ttrss_admin_email }}');
 
-define('DIGEST_SUBJECT', '[tt-rss] New headlines for {{ ttrss_domain }}');
+putenv('TTRSS_DIGEST_SUBJECT=[tt-rss] New headlines for {{ ttrss_domain }}');
 
-define('DIGEST_SENDER_ADDRESS', '{{ ttrss_admin_email }}');
+putenv('TTRSS_DIGEST_SENDER_ADDRESS={{ ttrss_admin_email }}');
 
 define('CHECK_FOR_UPDATES', true);
 
 define('ENABLE_GZIP_OUTPUT', false);
 
-define('PLUGINS', 'auth_internal, note, nfav, bookmarklet, freshapi');
+putenv('TTRSS_PLUGINS=auth_internal, note, nfav, bookmarklet, freshapi');
 
 // Enable API access for FreshAPI plugin
 define('ENABLE_API_ACCESS', true);
 
-define('LOG_DESTINATION', 'file');
-
 define('CONFIG_VERSION', 26);
 
 // Admin user configuration
-define('ADMIN_USER', '{{ ttrss_admin_user }}');
-define('ADMIN_PASSWORD', '{{ ttrss_admin_password }}');
-define('ADMIN_EMAIL', '{{ ttrss_admin_email }}');
+putenv('TTRSS_ADMIN_USER={{ ttrss_admin_user }}');
+putenv('TTRSS_ADMIN_PASSWORD={{ ttrss_admin_password }}');
+putenv('TTRSS_ADMIN_EMAIL={{ ttrss_admin_email }}');
 
 // Security settings
 define('ALLOW_UNSAFE_AJAX', false);
@@ -85,7 +83,7 @@ define('CACHE_ENABLE', true);
 define('CACHE_TTL', 3600);
 
 // Logging
-define('LOG_DESTINATION', 'file');
-define('LOG_FILE', '/var/log/ttrss/ttrss.log');
+putenv('TTRSS_LOG_DESTINATION=file');
+putenv('TTRSS_LOG_FILE=/var/log/ttrss/ttrss.log');
 ?>
 

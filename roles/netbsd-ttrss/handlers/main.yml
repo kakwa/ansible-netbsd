@@ -7,7 +7,7 @@
 
 - name: reload php-fpm
   ansible.builtin.service:
-    name: php_fpm
+    name: php_fpm83
     state: reloaded
   become: true
 

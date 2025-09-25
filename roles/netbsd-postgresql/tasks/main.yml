@@ -48,20 +48,30 @@
     enabled: true
   become: true
 
-- name: Create PostgreSQL databases
-  postgresql_db:
-    name: "{{ item.name }}"
-    login_user: pgsql
-    state: present
-  loop: "{{ postgresql_databases }}"
-  when: postgresql_databases | length > 0
-
-- name: Create PostgreSQL users
+- name: Ensure PostgreSQL users exist
   postgresql_user:
     login_user: pgsql
     name: "{{ item.user }}"
     password: "{{ item.password }}"
-    login_db: "{{ item.name }}"
     state: present
+    login_db: "{{ item.name }}"
+  loop: "{{ postgresql_databases }}"
+  when: postgresql_databases | length > 0
+
+- name: Ensure PostgreSQL databases exist with proper owner
+  postgresql_db:
+    login_user: pgsql
+    name: "{{ item.name }}"
+    owner: "{{ item.user }}"
+    state: present
+  loop: "{{ postgresql_databases }}"
+  when: postgresql_databases | length > 0
+
+- name: Ensure public schema ownership
+  postgresql_schema:
+    login_user: pgsql
+    db: "{{ item.name }}"
+    name: public
+    owner: "{{ item.user }}"
   loop: "{{ postgresql_databases }}"
   when: postgresql_databases | length > 0
