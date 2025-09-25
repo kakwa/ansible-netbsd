@@ -1,9 +1,19 @@
 ---
+# Python version configuration (can be overridden at playbook level)
+python_version_major: "3"
+python_version_minor: "12"
+python_version_full: "{{ python_version_major }}.{{ python_version_minor }}"
+python_version_short: "{{ python_version_major }}{{ python_version_minor }}"
+
+# Derived Python package names
+python_binary: "python{{ python_version_short }}"
+python_package_prefix: "py{{ python_version_short }}"
+
 # PostgreSQL packages
 postgresql_packages:
   - postgresql16-server
   - postgresql16-client
-  - py312-psycopg2
+  - "{{ python_package_prefix }}-psycopg2"
 
 # PostgreSQL databases configuration
 # List of databases to create, each with name, user, and password

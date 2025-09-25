@@ -1,0 +1,23 @@
+---
+# Python version configuration (can be overridden at playbook level)
+python_version_major: "3"
+python_version_minor: "12"
+python_version_full: "{{ python_version_major }}.{{ python_version_minor }}"
+python_version_short: "{{ python_version_major }}{{ python_version_minor }}"
+
+# Derived Python package names and paths
+python_binary: "python{{ python_version_short }}"
+python_package_prefix: "py{{ python_version_short }}"
+python_package_name: "python{{ python_version_short }}"
+
+# Python packages to install
+python_packages:
+  - "{{ python_package_name }}"
+  - "{{ python_package_prefix }}-pip"
+  - "{{ python_package_prefix }}-setuptools"
+
+# Optional additional Python packages
+python_extra_packages: []
+  # Example:
+  # - "{{ python_package_prefix }}-requests"
+  # - "{{ python_package_prefix }}-yaml"

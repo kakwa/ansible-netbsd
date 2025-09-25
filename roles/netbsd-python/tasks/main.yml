@@ -1,0 +1,33 @@
+---
+- name: Install Python {{ python_version_full }} and essential packages
+  community.general.pkgin:
+    name: "{{ python_packages + python_extra_packages }}"
+    state: present
+  become: true
+
+- name: Create symlink for python3 command
+  file:
+    src: "/usr/pkg/bin/{{ python_binary }}"
+    dest: "/usr/pkg/bin/python3"
+    state: link
+    force: true
+  become: true
+  when: python_version_major == "3"
+
+- name: Create symlink for python command (if Python 3)
+  file:
+    src: "/usr/pkg/bin/{{ python_binary }}"
+    dest: "/usr/pkg/bin/python"
+    state: link
+    force: true
+  become: true
+  when: python_version_major == "3"
+
+- name: Verify Python installation
+  command: "{{ python_binary }} --version"
+  register: python_version_check
+  changed_when: false
+
+- name: Display installed Python version
+  debug:
+    msg: "Installed Python version: {{ python_version_check.stdout }}"

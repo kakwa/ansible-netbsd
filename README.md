@@ -11,11 +11,11 @@ Before running the Ansible playbooks, you'll need to set up the NetBSD system wi
 pkg_add https://cdn.NetBSD.org/pub/pkgsrc/packages/NetBSD/`uname -m`/`uname -r`/All/pkgin
 ```
 
-### 2. Install sudo and Python 3.12
+### 2. Install sudo and Python
 
 ```bash
 pkgin update
-pkgin install sudo python312
+pkgin install sudo python312  # or your preferred Python version
 ```
 
 ### 3. Add user to wheel group

@@ -1,9 +1,19 @@
 ---
+# Python version configuration (can be overridden at playbook level)
+python_version_major: "3"
+python_version_minor: "12"
+python_version_full: "{{ python_version_major }}.{{ python_version_minor }}"
+python_version_short: "{{ python_version_major }}{{ python_version_minor }}"
+
+# Derived Python package names
+python_binary: "python{{ python_version_short }}"
+python_package_prefix: "py{{ python_version_short }}"
+
 # Nginx packages
 nginx_packages:
   - nginx
-  - py312-certbot-nginx
-  - py312-passlib
+  - "{{ python_package_prefix }}-certbot-nginx"
+  - "{{ python_package_prefix }}-passlib"
 
 # SSL configuration
 ssl_email: "admin@example.com"

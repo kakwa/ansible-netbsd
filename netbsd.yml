@@ -8,10 +8,16 @@
     php_version_minor: "3"
     php_version_full: "{{ php_version_major }}.{{ php_version_minor }}"
     php_version_short: "{{ php_version_major }}{{ php_version_minor }}"
+    # Python version configuration
+    python_version_major: "3"
+    python_version_minor: "12"
+    python_version_full: "{{ python_version_major }}.{{ python_version_minor }}"
+    python_version_short: "{{ python_version_major }}{{ python_version_minor }}"
   roles:
     - os-release
     - netbsd-pkgin
     - netbsd-pkgsrc
+    - netbsd-python
     - vim
     - zsh
     - netbsd-misc-packages

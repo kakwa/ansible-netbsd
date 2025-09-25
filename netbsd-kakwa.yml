@@ -8,10 +8,16 @@
     php_version_minor: "3"
     php_version_full: "{{ php_version_major }}.{{ php_version_minor }}"
     php_version_short: "{{ php_version_major }}{{ php_version_minor }}"
+    # Python version configuration
+    python_version_major: "3"
+    python_version_minor: "12"
+    python_version_full: "{{ python_version_major }}.{{ python_version_minor }}"
+    python_version_short: "{{ python_version_major }}{{ python_version_minor }}"
   roles:
     - { role: os-release, tags: ["system", "os-release"] }
     - { role: netbsd-pkgin, tags: ["system", "netbsd-pkgin"] }
     - { role: netbsd-pkgsrc, tags: ["system", "netbsd-pkgsrc"] }
+    - { role: netbsd-python, tags: ["system", "netbsd-python"] }
     - { role: vim, tags: ["system", "vim"] }
     - { role: zsh, tags: ["system", "zsh"] }
     - { role: netbsd-misc-packages, tags: ["system", "netbsd-misc-packages"] }
