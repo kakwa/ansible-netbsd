@@ -1,0 +1,34 @@
+===========================================================================
+$NetBSD$
+
+FreshRSS has been installed in ${PREFIX}/share/freshrss.
+
+To complete the installation:
+
+1. Create a database for FreshRSS (MySQL, PostgreSQL, or SQLite)
+
+2. Configure your web server to serve the files from:
+   ${PREFIX}/share/freshrss/p/
+
+3. Make sure the following directories are writable by your web server:
+   - ${PREFIX}/share/freshrss/data/
+   - ${PREFIX}/share/freshrss/cache/
+   - ${PREFIX}/share/freshrss/extensions/
+
+4. Copy the default configuration:
+   cd ${PREFIX}/share/freshrss
+   cp data/config.default.php data/config.php
+
+5. Edit data/config.php with your database settings
+
+6. Run the installation script by accessing your FreshRSS URL in a web browser
+   or use the command line:
+   ${PREFIX}/bin/php ${PREFIX}/share/freshrss/cli/prepare.php
+
+7. Create your first user:
+   ${PREFIX}/bin/php ${PREFIX}/share/freshrss/cli/create-user.php --user admin
+
+For more information, see the documentation at:
+https://freshrss.github.io/FreshRSS/
+
+===========================================================================

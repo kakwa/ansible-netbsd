@@ -1,0 +1,119 @@
+server {
+    listen 80;
+    listen [::]:80;
+    server_name {{ freshrss_domain }};
+
+    # Redirect HTTP to HTTPS
+    return 301 https://$server_name$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
+    server_name {{ freshrss_domain }};
+
+    # SSL configuration - use Let's Encrypt if available, otherwise self-signed
+    {% if freshrss_domain in letsencrypt_available_certs %}
+    ssl_certificate /usr/pkg/etc/letsencrypt/live/{{ freshrss_domain }}/fullchain.pem;
+    ssl_certificate_key /usr/pkg/etc/letsencrypt/live/{{ freshrss_domain }}/privkey.pem;
+    {% elif primary_letsencrypt_domain %}
+    ssl_certificate /usr/pkg/etc/letsencrypt/live/{{ primary_letsencrypt_domain }}/fullchain.pem;
+    ssl_certificate_key /usr/pkg/etc/letsencrypt/live/{{ primary_letsencrypt_domain }}/privkey.pem;
+    {% else %}
+    ssl_certificate /usr/pkg/etc/nginx/ssl/selfsigned.crt;
+    ssl_certificate_key /usr/pkg/etc/nginx/ssl/selfsigned.key;
+    {% endif %}
+
+    # Security headers
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header Referrer-Policy "no-referrer-when-downgrade" always;
+    add_header Content-Security-Policy "default-src 'self' http: https: data: blob: 'unsafe-inline' 'unsafe-eval'" always;
+
+    root /usr/pkg/share/freshrss/p;
+    index index.php index.html;
+
+    # Logging
+    access_log /var/log/nginx/freshrss_access.log;
+    error_log /var/log/nginx/freshrss_error.log;
+
+    # Handle API endpoints
+    location ~ ^/api/ {
+        try_files $uri $uri/ /index.php?$query_string;
+        fastcgi_split_path_info ^(.+\.php)(/.+)$;
+        fastcgi_pass unix:{{ php_fpm_listen }};
+        fastcgi_index index.php;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        include fastcgi_params;
+        
+        # FreshRSS specific settings
+        fastcgi_param HTTP_PROXY "";
+        fastcgi_read_timeout 300;
+        fastcgi_connect_timeout 300;
+        fastcgi_send_timeout 300;
+    }
+
+    # Handle regular PHP files
+    location ~ \.php$ {
+        try_files $uri =404;
+        fastcgi_split_path_info ^(.+\.php)(/.+)$;
+        fastcgi_pass unix:{{ php_fpm_listen }};
+        fastcgi_index index.php;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        include fastcgi_params;
+        
+        # FreshRSS specific settings
+        fastcgi_param HTTP_PROXY "";
+        fastcgi_read_timeout 300;
+        fastcgi_connect_timeout 300;
+        fastcgi_send_timeout 300;
+    }
+
+    # Handle static files with caching
+    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2)$ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+        try_files $uri =404;
+    }
+
+    # Deny access to sensitive files and directories
+    location ~ /\. {
+        deny all;
+    }
+
+    location ~ ^/(data|cache|logs)/ {
+        deny all;
+    }
+
+    location ~ /(?:README|LICENSE|CHANGELOG|\.md$) {
+        deny all;
+    }
+
+    # Handle favicons
+    location /favicon.ico {
+        try_files $uri /i/favicon.ico;
+    }
+
+    # Handle FreshRSS specific paths
+    location /i/ {
+        try_files $uri =404;
+    }
+
+    location /f.php {
+        try_files $uri =404;
+        fastcgi_split_path_info ^(.+\.php)(/.+)$;
+        fastcgi_pass unix:{{ php_fpm_listen }};
+        fastcgi_index index.php;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        include fastcgi_params;
+        fastcgi_param HTTP_PROXY "";
+    }
+
+    # Main location with authentication
+    location / {
+        auth_basic "FreshRSS Access";
+        auth_basic_user_file /usr/pkg/etc/nginx/.htpasswd_freshrss;
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+}

@@ -1,0 +1,65 @@
+<?php
+/*
+ * FreshRSS configuration file
+ */
+
+return array(
+    'environment' => 'production',
+    'base_url' => 'https://{{ freshrss_domain }}/',
+    'title' => '{{ freshrss_title }}',
+    'meta_description' => '',
+    'default_user' => '{{ freshrss_default_user }}',
+    'allow_anonymous' => {{ freshrss_allow_anonymous | lower }},
+    'allow_anonymous_refresh' => {{ freshrss_allow_anonymous_refresh | lower }},
+    'auth_type' => '{{ freshrss_auth_type }}',
+    'api_enabled' => true,
+    'unsafe_autologin_enabled' => false,
+    'simplepie_syslog_enabled' => true,
+    'check_new_version' => false,
+    
+    'db' => array(
+        'type' => 'pgsql',
+        'host' => '{{ freshrss_db_host }}',
+        'port' => {{ freshrss_db_port }},
+        'user' => '{{ freshrss_db_user }}',
+        'password' => '{{ freshrss_db_password }}',
+        'base' => '{{ freshrss_db_name }}',
+        'prefix' => 'freshrss_',
+        'connection_uri_params' => '',
+        'pdo_options' => array(),
+    ),
+    
+    'mailer' => 'mail',
+    'smtp' => array(
+        'hostname' => '',
+        'host' => 'localhost',
+        'port' => 25,
+        'auth' => false,
+        'username' => '',
+        'password' => '',
+        'secure' => '',
+    ),
+    
+    'limits' => array(
+        'cache_duration' => {{ freshrss_limits_cache_duration }},
+        'timeout' => {{ freshrss_limits_timeout }},
+        'max_inactivity' => 34560000,
+        'cookie_duration' => {{ freshrss_limits_cookie_duration }},
+    ),
+    
+    'curl_options' => array(
+        CURLOPT_PROXYTYPE => CURLPROXY_HTTP,
+        CURLOPT_PROXY => '',
+        CURLOPT_PROXYUSERPWD => '',
+        CURLOPT_SSL_VERIFYPEER => true,
+        CURLOPT_USERAGENT => 'FreshRSS/{{ ansible_date_time.year }}.{{ ansible_date_time.month }}.{{ ansible_date_time.day }} ({{ ansible_fqdn }})',
+    ),
+    
+    'extensions_enabled' => array(
+{% for extension in freshrss_extensions_enabled %}
+        '{{ extension }}',
+{% endfor %}
+    ),
+    
+    'pubsubhubbub_enabled' => true,
+);

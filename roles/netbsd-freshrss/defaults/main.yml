@@ -1,0 +1,42 @@
+---
+# Domain configurations
+freshrss_domain: "rss.example.com"
+
+# FreshRSS configuration
+freshrss_admin_user: "admin"
+freshrss_admin_password: "{{ vault_freshrss_admin_password | default('admin123') }}"
+freshrss_admin_email: "admin@example.com"
+
+# Database connection (for FreshRSS)
+freshrss_db_name: "freshrss"
+freshrss_db_user: "freshrss"
+freshrss_db_password: "{{ vault_postgresql_password | default('changeme123') }}"
+freshrss_db_host: "localhost"
+freshrss_db_port: 5432
+
+# Authentication for nginx htpasswd
+freshrss_auth_user: "{{ freshrss_admin_user }}"
+freshrss_auth_password: "{{ freshrss_admin_password }}"
+
+# PHP-FPM configuration
+php_fpm_listen: "/var/run/php-fpm83"
+
+# FreshRSS application settings
+freshrss_title: "FreshRSS"
+freshrss_default_user: "{{ freshrss_admin_user }}"
+freshrss_language: "en"
+freshrss_timezone: "UTC"
+freshrss_theme: "Origine"
+
+# Security settings
+freshrss_allow_anonymous: false
+freshrss_allow_anonymous_refresh: false
+freshrss_auth_type: "form"
+
+# Performance settings
+freshrss_limits_cache_duration: 800
+freshrss_limits_timeout: 20
+freshrss_limits_cookie_duration: 2592000
+
+# Extensions
+freshrss_extensions_enabled: []

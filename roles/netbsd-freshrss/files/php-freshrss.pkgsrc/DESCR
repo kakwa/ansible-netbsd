@@ -1,0 +1,19 @@
+FreshRSS is a self-hosted RSS feed aggregator such as Leed or Kriss Feed.
+
+It is lightweight, easy to work with, powerful, and customizable.
+
+FreshRSS is a multi-user application with an anonymous reading mode.
+It supports PubSubHubbub for instant notifications from compatible websites.
+
+Features include:
+- Multi-user support
+- RSS/Atom feed reading
+- Keyboard shortcuts
+- Mobile responsive interface  
+- Search within articles
+- Category organization
+- Sharing with external services
+- Import/export OPML
+- API access
+- Extensions support
+- Theme customization

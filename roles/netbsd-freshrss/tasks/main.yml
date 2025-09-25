@@ -1,0 +1,148 @@
+---
+
+- name: Create pkgsrc overlay directory
+  file:
+    path: /usr/pkgsrc/overlay
+    state: directory
+    mode: '0755'
+  become: true
+
+- name: Copy php-freshrss pkgsrc files to remote server
+  copy:
+    src: php-freshrss.pkgsrc/
+    dest: /usr/pkgsrc/overlay/php-freshrss/
+    owner: root
+    group: wheel
+    mode: '0644'
+    directory_mode: '0755'
+  become: true
+
+- name: Build and install FreshRSS from overlay pkgsrc
+  command: make install
+  args:
+    chdir: /usr/pkgsrc/overlay/php-freshrss
+    creates: /usr/pkg/share/freshrss
+  become: true
+
+- name: Create FreshRSS data directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ php_fpm_user }}"
+    group: "{{ php_fpm_group }}"
+    mode: '0755'
+  loop:
+    - /var/www/freshrss-data
+    - /var/www/freshrss-data/cache
+    - /var/www/freshrss-data/favicons
+    - /var/www/freshrss-data/users
+    - /var/www/freshrss-data/users/_
+    - /var/www/freshrss-data/users/_/queries
+    - /var/www/freshrss-data/PubSubHubbub
+    - /var/www/freshrss-data/extensions
+
+- name: Create FreshRSS log directory
+  file:
+    path: /var/log/freshrss
+    state: directory
+    owner: "{{ php_fpm_user }}"
+    group: "{{ php_fpm_group }}"
+    mode: '0755'
+
+- name: Create FreshRSS configuration file
+  template:
+    src: freshrss-config.php.j2
+    dest: /usr/pkg/share/freshrss/data/config.php
+    owner: "{{ php_fpm_user }}"
+    group: "{{ php_fpm_group }}"
+    mode: '0640'
+
+- name: Create FreshRSS default user configuration
+  template:
+    src: freshrss-user-config.php.j2
+    dest: /var/www/freshrss-data/users/_/config.php
+    owner: "{{ php_fpm_user }}"
+    group: "{{ php_fpm_group }}"
+    mode: '0640'
+
+- name: Check if FreshRSS database is initialized
+  command: >
+    psql
+    -h {{ freshrss_db_host }}
+    -p {{ freshrss_db_port }}
+    -U {{ freshrss_db_user }}
+    -d {{ freshrss_db_name }}
+    -tAc "SELECT count(*) FROM information_schema.tables WHERE table_name='user';"
+  register: db_check
+  changed_when: false
+  environment:
+    PGPASSWORD: "{{ freshrss_db_password }}"
+
+- name: Install FreshRSS database schema
+  command: >
+    /usr/pkg/bin/php83 /usr/pkg/share/freshrss/cli/prepare.php
+    --db-type pgsql
+    --db-host {{ freshrss_db_host }}
+    --db-port {{ freshrss_db_port }}
+    --db-user {{ freshrss_db_user }}
+    --db-password {{ freshrss_db_password }}
+    --db-base {{ freshrss_db_name }}
+    --default-user {{ freshrss_admin_user }}
+  args:
+    chdir: /usr/pkg/share/freshrss
+  become: true
+  when: db_check.stdout == "0"
+
+- name: Create FreshRSS admin user
+  freshrss_user:
+    username: "{{ freshrss_admin_user }}"
+    password: "{{ freshrss_admin_password }}"
+    email: "{{ freshrss_admin_email }}"
+    state: present
+    php_binary: "/usr/pkg/bin/php83"
+    freshrss_path: "/usr/pkg/share/freshrss"
+  become: true
+
+- name: Create FreshRSS htpasswd file for nginx authentication
+  htpasswd:
+    path: /usr/pkg/etc/nginx/.htpasswd_freshrss
+    name: "{{ freshrss_auth_user }}"
+    password: "{{ freshrss_auth_password }}"
+    owner: root
+    group: wheel
+    mode: '0644'
+
+- name: Include SSL certificate detection tasks
+  include_tasks: "{{ playbook_dir }}/roles/netbsd-nginx/tasks/detect_ssl_certificates.yml"
+
+- name: Create FreshRSS nginx configuration
+  template:
+    src: freshrss-nginx.conf.j2
+    dest: /usr/pkg/etc/nginx/sites-available/freshrss
+    owner: root
+    group: wheel
+    mode: '0644'
+  notify: restart nginx
+
+- name: Enable FreshRSS site
+  file:
+    src: /usr/pkg/etc/nginx/sites-available/freshrss
+    dest: /usr/pkg/etc/nginx/sites-enabled/freshrss
+    state: link
+  notify: restart nginx
+
+- name: Create FreshRSS extensions directory
+  file:
+    path: /usr/pkg/share/freshrss/extensions
+    state: directory
+    owner: root
+    group: wheel
+    mode: '0755'
+
+- name: Setup FreshRSS cron jobs for feed updates
+  cron:
+    name: "FreshRSS feed update"
+    minute: "*/10"
+    job: "/usr/pkg/bin/php83 /usr/pkg/share/freshrss/app/actualize_script.php > /var/log/freshrss/cron.log 2>&1"
+    user: "{{ php_fpm_user }}"
+  become: true

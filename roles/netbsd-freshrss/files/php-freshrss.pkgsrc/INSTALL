@@ -1,0 +1,27 @@
+#!/bin/sh
+#
+# $NetBSD$
+#
+
+case ${STAGE} in
+POST-INSTALL)
+	# Ensure directories exist and have correct permissions
+	${MKDIR} ${PKG_PREFIX}/share/freshrss/data/users
+	${MKDIR} ${PKG_PREFIX}/share/freshrss/cache
+	${MKDIR} ${PKG_PREFIX}/share/freshrss/extensions
+	
+	# Set ownership and permissions
+	${CHOWN} -R ${WWWOWN}:${WWWGRP} ${PKG_PREFIX}/share/freshrss/data
+	${CHOWN} -R ${WWWOWN}:${WWWGRP} ${PKG_PREFIX}/share/freshrss/cache  
+	${CHOWN} -R ${WWWOWN}:${WWWGRP} ${PKG_PREFIX}/share/freshrss/extensions
+	
+	${CHMOD} 755 ${PKG_PREFIX}/share/freshrss/data
+	${CHMOD} 755 ${PKG_PREFIX}/share/freshrss/cache
+	${CHMOD} 755 ${PKG_PREFIX}/share/freshrss/extensions
+	
+	# Set permissions for CLI scripts
+	${CHMOD} +x ${PKG_PREFIX}/share/freshrss/cli/*.php
+	${CHMOD} +x ${PKG_PREFIX}/share/freshrss/app/actualize_script.php
+	
+	;;
+esac
