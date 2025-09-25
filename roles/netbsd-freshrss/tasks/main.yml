@@ -88,7 +88,7 @@
 
 - name: Install FreshRSS database schema
   command: >
-    /usr/pkg/bin/php83 /usr/pkg/share/freshrss/cli/prepare.php
+    {{ php_binary }} /usr/pkg/share/freshrss/cli/prepare.php
     --db-type pgsql
     --db-host {{ freshrss_db_host }}
     --db-port {{ freshrss_db_port }}
@@ -107,7 +107,7 @@
     password: "{{ freshrss_admin_password }}"
     email: "{{ freshrss_admin_email }}"
     state: present
-    php_binary: "/usr/pkg/bin/php83"
+    php_binary: "{{ php_binary }}"
     freshrss_path: "/usr/pkg/share/freshrss"
     become_user: "{{ php_fpm_user }}"
   become: true
@@ -152,6 +152,6 @@
   cron:
     name: "FreshRSS feed update"
     minute: "*/10"
-    job: "/usr/pkg/bin/php83 /usr/pkg/share/freshrss/app/actualize_script.php > /var/log/freshrss/cron.log 2>&1"
+    job: "{{ php_binary }} /usr/pkg/share/freshrss/app/actualize_script.php > /var/log/freshrss/cron.log 2>&1"
     user: "{{ php_fpm_user }}"
   become: true

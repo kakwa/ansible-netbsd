@@ -18,4 +18,4 @@ ttrss_db_port: 5432
 # Authentication for nginx htpasswd
 ttrss_auth_user: "{{ ttrss_admin_user }}"
 ttrss_auth_password: "{{ ttrss_admin_password }}"
-php_fpm_listen: "/var/run/php-fpm83"
+php_fpm_listen: "/var/run/php-fpm{{ php_version_short }}"

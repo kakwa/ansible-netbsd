@@ -70,7 +70,7 @@
 
 - name: Initialize/upgrade tt-rss DB schema
   command: >
-    /usr/pkg/bin/php83 /usr/pkg/share/tt-rss/update.php --update-schema --force-yes
+    {{ php_binary }} /usr/pkg/share/tt-rss/update.php --update-schema --force-yes
   args:
     chdir: /usr/pkg/share/tt-rss
   become: true
@@ -84,7 +84,7 @@
     access_level: 10
     api_enabled: true
     state: present
-    php_binary: "/usr/pkg/bin/php83"
+    php_binary: "{{ php_binary }}"
     ttrss_path: "/usr/pkg/share/tt-rss"
   become: true
 

@@ -1,4 +1,18 @@
 ---
+# PHP version configuration (can be overridden at playbook level)
+php_version_major: "8"
+php_version_minor: "3"
+php_version_full: "{{ php_version_major }}.{{ php_version_minor }}"
+php_version_short: "{{ php_version_major }}{{ php_version_minor }}"
+
+# Derived PHP paths and names
+php_binary: "/usr/pkg/bin/php{{ php_version_short }}"
+php_fpm_binary: "/usr/pkg/sbin/php-fpm{{ php_version_short }}"
+php_fpm_service: "php_fpm{{ php_version_short }}"
+php_pkgsrc_dir: "/usr/pkgsrc/lang/php{{ php_version_short }}"
+php_config_dir: "/usr/pkg/share/examples/php/{{ php_version_full }}"
+php_etc_dir: "/usr/pkg/etc/php/{{ php_version_full }}"
+
 # PHP and PHP-FPM packages
 php_packages:
   - libxml2
@@ -18,7 +32,7 @@ php_packages:
 php_fpm_pool: "fpm"
 php_fpm_user: "fpm"
 php_fpm_group: "www"
-php_fpm_listen: "/var/run/php-fpm83"
+php_fpm_listen: "/var/run/php-fpm{{ php_version_short }}"
 php_fpm_pm_max_children: 50
 php_fpm_pm_start_servers: 5
 php_fpm_pm_min_spare_servers: 5

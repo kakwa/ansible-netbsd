@@ -2,6 +2,12 @@
 - name: NetBSD Server Setup
   hosts: all
   become: true
+  vars:
+    # PHP version configuration
+    php_version_major: "8"
+    php_version_minor: "3"
+    php_version_full: "{{ php_version_major }}.{{ php_version_minor }}"
+    php_version_short: "{{ php_version_major }}{{ php_version_minor }}"
   roles:
     - { role: os-release, tags: ["system", "os-release"] }
     - { role: netbsd-pkgin, tags: ["system", "netbsd-pkgin"] }

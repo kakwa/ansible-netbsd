@@ -7,36 +7,36 @@
 - name: Build and install PHP from pkgsrc
   command: make install
   args:
-    chdir: /usr/pkgsrc/lang/php83
-    creates: /usr/pkg/bin/php83
+    chdir: {{ php_pkgsrc_dir }}
+    creates: {{ php_binary }}
   become: true
 
 - name: Build and install PHP-FPM from pkgsrc
   command: make install
   args:
     chdir: /usr/pkgsrc/www/php-fpm
-    creates: /usr/pkg/sbin/php-fpm83
+    creates: {{ php_fpm_binary }}
   become: true
 
 - name: Build and install PHP-PDO from pkgsrc
   command: make install
   args:
     chdir: /usr/pkgsrc/databases/php-pdo
-    creates: /usr/pkg/share/examples/php/8.3/pdo.ini
+    creates: {{ php_config_dir }}/pdo.ini
   become: true
 
 - name: Build and install PHP-PDO from pkgsrc
   command: make install
   args:
     chdir: /usr/pkgsrc/databases/php-pdo_pgsql
-    creates: /usr/pkg/etc/php/8.3/php.d/pdo_pgsql.ini
+    creates: {{ php_etc_dir }}/php.d/pdo_pgsql.ini
   become: true
 
 - name: Build and install PHP-INT from pkgsrc
   command: make install
   args:
     chdir: /usr/pkgsrc/textproc/php-intl
-    creates: /usr/pkg/share/examples/php/8.3/intl.ini
+    creates: {{ php_config_dir }}/intl.ini
   become: true
 
 - name: Install FreshRSS build dependencies
@@ -54,13 +54,13 @@
   command: make install
   args:
     chdir: /usr/pkgsrc/www/php-curl/
-    creates: /usr/pkg/share/examples/php/8.3/curl.ini
+    creates: {{ php_config_dir }}/curl.ini
   become: true
 
-- name: Install php_fpm83 init script
+- name: Install {{ php_fpm_service }} init script
   ansible.builtin.copy:
-    src: /usr/pkg/share/examples/rc.d/php_fpm83
-    dest: /etc/rc.d/php_fpm83
+    src: /usr/pkg/share/examples/rc.d/{{ php_fpm_service }}
+    dest: /etc/rc.d/{{ php_fpm_service }}
     owner: root
     group: wheel
     mode: '0755'
@@ -93,7 +93,7 @@
 
 - name: Start & Enable PHP-FPM service
   ansible.builtin.service:
-    name: php_fpm83
+    name: {{ php_fpm_service }}
     state: started
     enabled: true
   become: true

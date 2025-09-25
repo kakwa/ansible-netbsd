@@ -4,7 +4,7 @@ This Ansible role sets up FreshRSS with PHP-FPM on NetBSD.
 
 ## Features
 
-- **PHP 8.3**: With FPM and all required extensions for FreshRSS
+- **PHP**: With FPM and all required extensions for FreshRSS (configurable version)
 - **FreshRSS**: Self-hosted RSS feed aggregator
 - **Database Integration**: PostgreSQL database connection (MySQL and SQLite also supported)
 - **User Management**: Custom Ansible module for managing FreshRSS users
@@ -195,16 +195,16 @@ FreshRSS includes several CLI tools for administration:
 
 ```bash
 # List users
-/usr/pkg/bin/php83 /usr/pkg/share/freshrss/cli/list-users.php
+${php_binary} /usr/pkg/share/freshrss/cli/list-users.php
 
 # Create user
-/usr/pkg/bin/php83 /usr/pkg/share/freshrss/cli/create-user.php --user newuser
+${php_binary} /usr/pkg/share/freshrss/cli/create-user.php --user newuser
 
 # Import OPML
-/usr/pkg/bin/php83 /usr/pkg/share/freshrss/cli/import-opml.php --user username --filename feeds.opml
+${php_binary} /usr/pkg/share/freshrss/cli/import-opml.php --user username --filename feeds.opml
 
 # Update feeds for specific user
-/usr/pkg/bin/php83 /usr/pkg/share/freshrss/cli/actualize-user.php --user username
+${php_binary} /usr/pkg/share/freshrss/cli/actualize-user.php --user username
 ```
 
 ## Differences from TT-RSS

@@ -4,7 +4,7 @@ This Ansible role sets up Tiny Tiny RSS (TTRSS) with PHP-FPM on NetBSD.
 
 ## Features
 
-- **PHP 8.3**: With FPM and all required extensions for Tiny Tiny RSS
+- **PHP**: With FPM and all required extensions for Tiny Tiny RSS (configurable version)
 - **Tiny Tiny RSS**: Self-hosted RSS reader application
 - **Database Integration**: PostgreSQL database connection
 - **User Management**: Custom Ansible module for managing TT-RSS users

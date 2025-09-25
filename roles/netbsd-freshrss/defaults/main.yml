@@ -19,7 +19,7 @@ freshrss_auth_user: "{{ freshrss_admin_user }}"
 freshrss_auth_password: "{{ freshrss_admin_password }}"
 
 # PHP-FPM configuration
-php_fpm_listen: "/var/run/php-fpm83"
+php_fpm_listen: "/var/run/php-fpm{{ php_version_short }}"
 
 # FreshRSS application settings
 freshrss_title: "FreshRSS"
