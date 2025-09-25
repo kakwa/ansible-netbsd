@@ -70,16 +70,24 @@
 - name: Create FreshRSS configuration file
   template:
     src: freshrss-config.php.j2
-    dest: /usr/pkg/share/freshrss/data/config.php
-    owner: "{{ php_fpm_user }}"
+    dest: /var/www/freshrss-data/config.php
+    owner: "root"
     group: "{{ php_fpm_group }}"
     mode: '0640'
+
+- name: Create FreshRSS constant override file
+  template:
+    src: constants.local.php.j2
+    dest: /usr/pkg/share/freshrss/constants.local.php
+    owner: "root"
+    group: "{{ php_fpm_group }}"
+    mode: '0644'
 
 - name: Create FreshRSS default user configuration
   template:
     src: freshrss-user-config.php.j2
     dest: /var/www/freshrss-data/users/_/config.php
-    owner: "{{ php_fpm_user }}"
+    owner: "root"
     group: "{{ php_fpm_group }}"
     mode: '0640'
 
