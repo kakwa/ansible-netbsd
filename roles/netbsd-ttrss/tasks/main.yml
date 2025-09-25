@@ -38,12 +38,27 @@
     group: "{{ php_fpm_group }}"
     mode: '0640'
 
-- name: Build and install PHP-INT from pkgsrc
-  command: /usr/pkg/share/tt-rss/update.php && touch /usr/pkg/share/tt-rss/db.inited
+- name: Check if tt-rss schema already exists
+  command: >
+    psql
+    -h {{ ttrss_db_host }}
+    -p {{ ttrss_db_port }}
+    -U {{ ttrss_db_user }}
+    -d {{ ttrss_db_name }}
+    -tAc "SELECT * FROM ttrss_version;"
+  register: schema_check
+  changed_when: false
+  environment:
+    PGPASSWORD: "{{ ttrss_db_password }}"
+
+- name: Initialize/upgrade tt-rss DB schema
+  command: >
+    /usr/pkg/bin/php83 /usr/pkg/share/tt-rss/update.php --update-schema --force-yes
   args:
     chdir: /usr/pkg/share/tt-rss
-    creates: /usr/pkg/share/tt-rss/db.inited
   become: true
+  ignore_errors: true
+  when: schema_check.stdout == ""
 
 - name: Create TT-RSS htpasswd file for nginx authentication
   htpasswd:
@@ -53,7 +68,6 @@
     owner: root
     group: wheel
     mode: '0644'
-  notify: restart nginx
 
 - name: Check if Let's Encrypt certificate exists for ttrss
   stat:
