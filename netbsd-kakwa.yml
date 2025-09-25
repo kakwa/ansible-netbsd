@@ -56,7 +56,7 @@
     - role: netbsd-freshrss
       tags: ["app", "netbsd-freshrss"]
       vars:
-        freshrss_domain: "netbsd.kakwalab.ovh"
+        freshrss_domain: "rss.kakwalab.ovh"
         freshrss_db_name: "freshrss"
         freshrss_db_user: "freshrss"
         freshrss_db_password: "{{ vault_dbfreshrss_password | default(lookup('password', './freshrss_db.password.txt chars=ascii_letters,digits length=16')) }}"
