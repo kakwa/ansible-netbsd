@@ -48,23 +48,11 @@
       tags: ["service", "netbsd-postgresql"]
       vars:
         postgresql_databases:
-          - name: "ttrss"
-            user: "ttrss"
-            password: "{{ vault_dbttrss_password | default(lookup('password', './ttrss_db.password.txt chars=ascii_letters,digits length=16')) }}"
           - name: "freshrss"
             user: "freshrss"
             password: "{{ vault_dbfreshrss_password | default(lookup('password', './freshrss_db.password.txt chars=ascii_letters,digits length=16')) }}"
     - role: netbsd-php
       tags: ["app", "netbsd-php"]
-    - role: netbsd-ttrss
-      tags: ["app", "netbsd-ttrss"]
-      vars:
-        ttrss_domain: "rss.kakwalab.ovh"
-        ttrss_db_name: "ttrss"
-        ttrss_db_user: "ttrss"
-        ttrss_db_password: "{{ vault_dbttrss_password | default(lookup('password', './ttrss_db.password.txt chars=ascii_letters,digits length=16')) }}"
-        ttrss_auth_user: "kakwa"
-        ttrss_auth_password: "{{ vault_proxy_password | default(lookup('password', './proxy.password.txt chars=ascii_letters,digits length=16')) }}"
     - role: netbsd-freshrss
       tags: ["app", "netbsd-freshrss"]
       vars:
