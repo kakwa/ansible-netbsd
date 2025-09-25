@@ -1,5 +1,5 @@
 ---
-- name: NetBSD Sparc Server
+- name: NetBSD Server Setup
   hosts: all
   become: true
   roles:
