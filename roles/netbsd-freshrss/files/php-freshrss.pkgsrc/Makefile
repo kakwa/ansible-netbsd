@@ -1,5 +1,8 @@
 # $NetBSD: Makefile,v 1.1 2025/09/25 00:00:00 carpenti Exp $
-FRESHRSS_VERSION=	1.24.3
+
+ACCEPTABLE_LICENSES+= gnu-agpl-v3
+
+FRESHRSS_VERSION=	1.27.0
 DISTNAME=	FreshRSS-${FRESHRSS_VERSION}
 PKGNAME=	${PHP_PKG_PREFIX}-freshrss-${FRESHRSS_VERSION}
 PKGREVISION=	1
@@ -21,8 +24,6 @@ DEPENDS+=	${PHP_PKG_PREFIX}-pdo_pgsql>=${PHP_BASE_VERS}:../../databases/php-pdo_
 DEPENDS+=	${PHP_PKG_PREFIX}-pdo_mysql>=${PHP_BASE_VERS}:../../databases/php-pdo_mysql
 DEPENDS+=	${PHP_PKG_PREFIX}-pdo_sqlite>=${PHP_BASE_VERS}:../../databases/php-pdo_sqlite
 DEPENDS+=	${PHP_PKG_PREFIX}-zip>=${PHP_BASE_VERS}:../../archivers/php-zip
-DEPENDS+=	${PHP_PKG_PREFIX}-xml>=${PHP_BASE_VERS}:../../textproc/php-xml
-DEPENDS+=	${PHP_PKG_PREFIX}-dom>=${PHP_BASE_VERS}:../../textproc/php-dom
 
 .include "options.mk"
 
