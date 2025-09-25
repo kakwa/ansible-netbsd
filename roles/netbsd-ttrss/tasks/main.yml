@@ -18,6 +18,9 @@
     - /var/www/ttrss-data/cache
     - /var/www/ttrss-data/lock
     - /var/www/ttrss-data/feed-icons
+    - /var/www/ttrss-data/cache/images
+    - /var/www/ttrss-data/cache/upload
+    - /var/www/ttrss-data/cache/export
 
 - name: Create TT-RSS log directory
   file:
