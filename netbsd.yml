@@ -28,7 +28,18 @@
     - role: netbsd-postgresql
       vars:
         postgresql_databases:
-          - name: "ttrss"
-            user: "ttrss"
-            password: "{{ vault_dbttrss_password | default(lookup('password', './ttrss_db.password.txt chars=ascii_letters,digits length=16')) }}"
-    - netbsd-ttrss
+          - name: "freshrss"
+            user: "freshrss"
+            password: "{{ vault_dbfreshrss_password | default(lookup('password', './freshrss_db.password.txt chars=ascii_letters,digits length=16')) }}"
+    - role: netbsd-php
+    - role: netbsd-freshrss
+      vars:
+        freshrss_domain: "rss.example.com"
+        freshrss_db_name: "freshrss"
+        freshrss_db_user: "freshrss"
+        freshrss_db_password: "{{ vault_dbfreshrss_password | default(lookup('password', './freshrss_db.password.txt chars=ascii_letters,digits length=16')) }}"
+        freshrss_admin_user: "admin"
+        freshrss_admin_password: "{{ vault_proxy_password | default(lookup('password', './proxy.password.txt chars=ascii_letters,digits length=16')) }}"
+        freshrss_admin_email: "admin@example.com"
+        freshrss_auth_user: "admin"
+        freshrss_auth_password: "{{ vault_proxy_password | default(lookup('password', './proxy.password.txt chars=ascii_letters,digits length=16')) }}"
