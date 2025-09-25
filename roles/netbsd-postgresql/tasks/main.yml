@@ -54,7 +54,7 @@
     name: "{{ item.user }}"
     password: "{{ item.password }}"
     state: present
-    login_db: "{{ item.name }}"
+    login_db: postgres
   loop: "{{ postgresql_databases }}"
   when: postgresql_databases | length > 0
 
