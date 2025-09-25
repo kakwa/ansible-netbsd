@@ -37,6 +37,11 @@ options:
         description:
             - Email address for the FreshRSS user
         type: str
+    api_password:
+        description:
+            - API password for the FreshRSS user
+        type: str
+        no_log: true
     language:
         description:
             - Default language for the user
@@ -44,9 +49,39 @@ options:
         default: 'en'
     timezone:
         description:
-            - Default timezone for the user
+            - Default timezone for the user (set after user creation via update)
         type: str
         default: 'UTC'
+    token:
+        description:
+            - Authentication token for the user
+        type: str
+        no_log: true
+    purge_after_months:
+        description:
+            - Number of months after which to purge old articles
+        type: int
+    feed_min_articles_default:
+        description:
+            - Default minimum number of articles per feed
+        type: int
+    feed_ttl_default:
+        description:
+            - Default TTL for feeds
+        type: int
+    since_hours_posts_per_rss:
+        description:
+            - Hours since posts per RSS
+        type: int
+    max_posts_per_rss:
+        description:
+            - Maximum posts per RSS
+        type: int
+    no_default_feeds:
+        description:
+            - Do not add default feeds when creating user
+        type: bool
+        default: false
     php_binary:
         description:
             - Path to the PHP binary to use
@@ -122,14 +157,14 @@ class FreshRssUserManager:
         self.module = module
         self.php_binary = module.params['php_binary']
         self.freshrss_path = module.params['freshrss_path']
-        self.cli_script = os.path.join(self.freshrss_path, 'cli', 'user.php')
+        self.cli_path = os.path.join(self.freshrss_path, 'cli')
         self.become_user = module.params.get('become_user')
 
     def _run_command(self, cmd):
         """Run a command with optional user switching"""
         if self.become_user:
             cmd = ['sudo', '-u', self.become_user] + cmd
-        
+
         try:
             result = subprocess.run(
                 cmd,
@@ -144,57 +179,89 @@ class FreshRssUserManager:
 
     def user_exists(self, username):
         """Check if a user exists"""
-        cmd = [self.php_binary, self.cli_script, '--user', username, '--list']
-        returncode, stdout, stderr = self._run_command(cmd)
-        return returncode == 0 and username in stdout
+        users = self.list_users()
+        return username in users
 
     def list_users(self):
         """List all users"""
-        cmd = [self.php_binary, self.cli_script, '--list']
+        cmd = [self.php_binary, os.path.join(self.cli_path, 'list-users.php')]
         returncode, stdout, stderr = self._run_command(cmd)
         if returncode == 0:
             # Parse the output to extract usernames
             users = []
-            for line in stdout.split('\n'):
-                if line.strip() and not line.startswith('FreshRSS'):
-                    users.append(line.strip())
+            for line in stdout.strip().split('\n'):
+                if line.strip():
+                    # Remove any extra whitespace and filter out header lines
+                    clean_line = line.strip()
+                    if clean_line and not clean_line.startswith('FreshRSS') and not clean_line.startswith('='):
+                        users.append(clean_line)
             return users
         return []
 
-    def add_user(self, username, password, email=None, language='en', timezone='UTC'):
+    def add_user(self, username, password, email=None, language='en', api_password=None,
+                 token=None, purge_after_months=None, feed_min_articles_default=None,
+                 feed_ttl_default=None, since_hours_posts_per_rss=None, max_posts_per_rss=None,
+                 no_default_feeds=False, **kwargs):
         """Add a new user"""
-        cmd = [self.php_binary, self.cli_script, '--user', username, '--add']
+        cmd = [self.php_binary, os.path.join(self.cli_path, 'create-user.php')]
+        cmd.extend(['--user', username])
+
         if password:
             cmd.extend(['--password', password])
+        if api_password:
+            cmd.extend(['--api-password', api_password])
         if email:
             cmd.extend(['--email', email])
-        cmd.extend(['--language', language, '--timezone', timezone])
-        
+        if language:
+            cmd.extend(['--language', language])
+        if token:
+            cmd.extend(['--token', token])
+        if purge_after_months is not None:
+            cmd.extend(['--purge-after-months', str(purge_after_months)])
+        if feed_min_articles_default is not None:
+            cmd.extend(['--feed-min-articles-default', str(feed_min_articles_default)])
+        if feed_ttl_default is not None:
+            cmd.extend(['--feed-ttl-default', str(feed_ttl_default)])
+        if since_hours_posts_per_rss is not None:
+            cmd.extend(['--since-hours-posts-per-rss', str(since_hours_posts_per_rss)])
+        if max_posts_per_rss is not None:
+            cmd.extend(['--max-posts-per-rss', str(max_posts_per_rss)])
+        if no_default_feeds:
+            cmd.append('--no-default-feeds')
+
         returncode, stdout, stderr = self._run_command(cmd)
         return returncode == 0, stdout, stderr
 
     def remove_user(self, username):
         """Remove a user"""
-        cmd = [self.php_binary, self.cli_script, '--user', username, '--delete']
+        cmd = [self.php_binary, os.path.join(self.cli_path, 'delete-user.php')]
+        cmd.extend(['--user', username])
         returncode, stdout, stderr = self._run_command(cmd)
         return returncode == 0, stdout, stderr
 
-    def set_password(self, username, password):
-        """Set user password"""
-        cmd = [self.php_binary, self.cli_script, '--user', username, '--password', password]
-        returncode, stdout, stderr = self._run_command(cmd)
-        return returncode == 0, stdout, stderr
+    def update_user(self, username, password=None, email=None, language=None, timezone=None):
+        """Update user information"""
+        cmd = [self.php_binary, os.path.join(self.cli_path, 'update-user.php')]
+        cmd.extend(['--user', username])
 
-    def set_email(self, username, email):
-        """Set user email"""
-        cmd = [self.php_binary, self.cli_script, '--user', username, '--email', email]
+        if password:
+            cmd.extend(['--password', password])
+        if email:
+            cmd.extend(['--email', email])
+        if language:
+            cmd.extend(['--language', language])
+        if timezone:
+            cmd.extend(['--timezone', timezone])
+
         returncode, stdout, stderr = self._run_command(cmd)
         return returncode == 0, stdout, stderr
 
     def get_user_info(self, username):
         """Get user information"""
-        cmd = [self.php_binary, self.cli_script, '--user', username, '--get']
+        cmd = [self.php_binary, os.path.join(self.cli_path, 'user-info.php')]
+        cmd.extend(['--user', username])
         returncode, stdout, stderr = self._run_command(cmd)
+
         if returncode == 0:
             try:
                 # Parse user info from output
@@ -204,7 +271,7 @@ class FreshRssUserManager:
                         key, value = line.split(':', 1)
                         info[key.strip().lower()] = value.strip()
                 return info
-            except:
+            except Exception:
                 pass
         return {}
 
@@ -215,8 +282,16 @@ def main():
         state=dict(type='str', default='present', choices=['present', 'absent']),
         password=dict(type='str', no_log=True),
         email=dict(type='str'),
+        api_password=dict(type='str', no_log=True),
         language=dict(type='str', default='en'),
         timezone=dict(type='str', default='UTC'),
+        token=dict(type='str', no_log=True),
+        purge_after_months=dict(type='int'),
+        feed_min_articles_default=dict(type='int'),
+        feed_ttl_default=dict(type='int'),
+        since_hours_posts_per_rss=dict(type='int'),
+        max_posts_per_rss=dict(type='int'),
+        no_default_feeds=dict(type='bool', default=False),
         php_binary=dict(type='str', default='/usr/pkg/bin/php83'),
         freshrss_path=dict(type='str', default='/usr/pkg/share/freshrss'),
         become_user=dict(type='str', required=False)
@@ -241,8 +316,16 @@ def main():
     state = module.params['state']
     password = module.params['password']
     email = module.params['email']
+    api_password = module.params['api_password']
     language = module.params['language']
     timezone = module.params['timezone']
+    token = module.params['token']
+    purge_after_months = module.params['purge_after_months']
+    feed_min_articles_default = module.params['feed_min_articles_default']
+    feed_ttl_default = module.params['feed_ttl_default']
+    since_hours_posts_per_rss = module.params['since_hours_posts_per_rss']
+    max_posts_per_rss = module.params['max_posts_per_rss']
+    no_default_feeds = module.params['no_default_feeds']
 
     # Check if user exists
     user_exists = manager.user_exists(username)
@@ -253,48 +336,70 @@ def main():
             # Create new user
             if not password:
                 module.fail_json(msg="Password is required when creating a new user")
-            
+
             if module.check_mode:
                 result['changed'] = True
                 result['msg'] = f"Would create user {username}"
                 module.exit_json(**result)
 
-            success, stdout, stderr = manager.add_user(username, password, email, language, timezone)
+            success, stdout, stderr = manager.add_user(
+                username, password, email, language, api_password, token,
+                purge_after_months, feed_min_articles_default, feed_ttl_default,
+                since_hours_posts_per_rss, max_posts_per_rss, no_default_feeds
+            )
             if success:
                 result['changed'] = True
                 result['msg'] = f"User {username} created successfully"
                 result['user_exists'] = True
+
+                # If timezone was specified, try to update it after creation
+                if timezone and timezone != 'UTC':
+                    tz_success, tz_stdout, tz_stderr = manager.update_user(username, timezone=timezone)
+                    if not tz_success:
+                        # Don't fail completely, but warn about timezone
+                        result['msg'] += f" (Warning: Could not set timezone: {tz_stderr})"
             else:
                 module.fail_json(msg=f"Failed to create user {username}: {stderr}")
         else:
             # User exists, check if we need to update anything
-            changes_made = []
+            changes_needed = {}
             user_info = manager.get_user_info(username)
-            
+
+            # Always update password if provided (we can't check current password)
             if password:
-                # Always try to set password for consistency
-                if not module.check_mode:
-                    success, stdout, stderr = manager.set_password(username, password)
-                    if success:
-                        changes_made.append("password updated")
-                    else:
-                        module.fail_json(msg=f"Failed to update password for user {username}: {stderr}")
-                else:
-                    changes_made.append("password would be updated")
+                changes_needed['password'] = password
 
+            # Check email
             if email and user_info.get('email', '') != email:
-                if not module.check_mode:
-                    success, stdout, stderr = manager.set_email(username, email)
-                    if success:
-                        changes_made.append("email updated")
-                    else:
-                        module.fail_json(msg=f"Failed to update email for user {username}: {stderr}")
-                else:
-                    changes_made.append("email would be updated")
+                changes_needed['email'] = email
 
-            if changes_made:
-                result['changed'] = True
-                result['msg'] = f"User {username} updated: {', '.join(changes_made)}"
+            # Check language
+            if language and user_info.get('language', '') != language:
+                changes_needed['language'] = language
+
+            # Check timezone
+            if timezone and user_info.get('timezone', '') != timezone:
+                changes_needed['timezone'] = timezone
+
+            if changes_needed:
+                if module.check_mode:
+                    result['changed'] = True
+                    result['msg'] = f"Would update user {username}: {', '.join(changes_needed.keys())}"
+                    module.exit_json(**result)
+
+                success, stdout, stderr = manager.update_user(
+                    username,
+                    password=changes_needed.get('password'),
+                    email=changes_needed.get('email'),
+                    language=changes_needed.get('language'),
+                    timezone=changes_needed.get('timezone')
+                )
+
+                if success:
+                    result['changed'] = True
+                    result['msg'] = f"User {username} updated: {', '.join(changes_needed.keys())}"
+                else:
+                    module.fail_json(msg=f"Failed to update user {username}: {stderr}")
             else:
                 result['msg'] = f"User {username} already exists with correct configuration"
 
