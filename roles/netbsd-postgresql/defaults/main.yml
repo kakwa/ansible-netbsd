@@ -9,10 +9,17 @@ python_version_short: "{{ python_version_major }}{{ python_version_minor }}"
 python_binary: "python{{ python_version_short }}"
 python_package_prefix: "py{{ python_version_short }}"
 
+# PostgreSQL version configuration (can be overridden at playbook level)
+postgresql_version_major: "16"
+
+# Derived PostgreSQL package names
+postgresql_server_package: "postgresql{{ postgresql_version_major }}-server"
+postgresql_client_package: "postgresql{{ postgresql_version_major }}-client"
+
 # PostgreSQL packages
 postgresql_packages:
-  - postgresql16-server
-  - postgresql16-client
+  - "{{ postgresql_server_package }}"
+  - "{{ postgresql_client_package }}"
   - "{{ python_package_prefix }}-psycopg2"
 
 # PostgreSQL databases configuration
