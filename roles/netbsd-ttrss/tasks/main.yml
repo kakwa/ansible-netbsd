@@ -86,10 +86,8 @@
     group: wheel
     mode: '0644'
 
-- name: Check if Let's Encrypt certificate exists for ttrss
-  stat:
-    path: "/usr/pkg/etc/letsencrypt/live/{{ ttrss_domain }}/fullchain.pem"
-  register: letsencrypt_cert_check
+- name: Include SSL certificate detection tasks
+  include_tasks: "{{ playbook_dir }}/roles/netbsd-nginx/tasks/detect_ssl_certificates.yml"
 
 - name: Create TT-RSS nginx configuration
   template:

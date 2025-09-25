@@ -1,13 +1,4 @@
 ---
-- name: "Check if Let's Encrypt certificate exists for reverse proxy: {{ item.name }}"
-  stat:
-    path: "/usr/pkg/etc/letsencrypt/live/{{ item.domain }}/fullchain.pem"
-  register: letsencrypt_cert_check
-
-- name: "Set use_letsencrypt variable for reverse proxy: {{ item.name }}"
-  set_fact:
-    reverse_proxies: "{{ reverse_proxies | map('combine', {'use_letsencrypt': (letsencrypt_cert_check.stat.exists | default(false)) if item.domain == item.domain else (item.use_letsencrypt | default(false))}) | list }}"
-
 - name: "Create htpasswd file for basic authentication (if enabled) for reverse proxy: {{ item.name }}"
   htpasswd:
     path: "/usr/pkg/etc/nginx/.htpasswd.{{ item.name }}"

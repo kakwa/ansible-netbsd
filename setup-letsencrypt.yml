@@ -1,0 +1,158 @@
+---
+# Standalone playbook for initial Let's Encrypt certificate setup
+# Usage:
+#   # Setup staging certificates (for testing)
+#   ansible-playbook setup-letsencrypt.yml -e ssl_staging=true
+#
+#   # Setup production certificates
+#   ansible-playbook setup-letsencrypt.yml -e ssl_staging=false
+#
+#   # Custom email and specific domains
+#   ansible-playbook setup-letsencrypt.yml -e ssl_email=admin@yourdomain.com -e "cert_domains=['domain1.com','domain2.com']"
+
+- name: Setup Let's Encrypt Certificates
+  hosts: all
+  become: true
+  vars:
+    ssl_staging: true  # Set to false for production certificates
+    ssl_email: "admin@example.com"  # Override with your email
+    cert_domains: []  # Override with specific domains, or leave empty to auto-detect
+  
+  tasks:
+    - name: Include nginx defaults
+      include_vars: roles/netbsd-nginx/defaults/main.yml
+
+    - name: Check if certbot is installed
+      stat:
+        path: /usr/pkg/bin/certbot
+      register: certbot_check
+
+    - name: Fail if certbot is not installed
+      fail:
+        msg: "Certbot is not installed. Please run the main nginx role first."
+      when: not certbot_check.stat.exists
+
+    - name: Auto-detect domains from nginx configurations
+      find:
+        paths: /usr/pkg/etc/nginx/sites-enabled
+        patterns: "*"
+      register: nginx_sites
+      when: cert_domains | length == 0
+
+    - name: Extract server_name from nginx configs
+      shell: |
+        grep -h "server_name" {{ item.path }} | sed 's/.*server_name \([^;]*\);.*/\1/' | tr -d ' '
+      register: server_names
+      loop: "{{ nginx_sites.files }}"
+      when: 
+        - cert_domains | length == 0
+        - nginx_sites is defined
+      changed_when: false
+
+    - name: Set domains from auto-detection
+      set_fact:
+        domains_to_request: "{{ server_names.results | map(attribute='stdout') | select | list | unique }}"
+      when: cert_domains | length == 0
+
+    - name: Set domains from manual specification
+      set_fact:
+        domains_to_request: "{{ cert_domains }}"
+      when: cert_domains | length > 0
+
+    - name: Display domains that will be requested
+      debug:
+        msg:
+          - "Email: {{ ssl_email }}"
+          - "Staging mode: {{ ssl_staging }}"
+          - "Domains to request: {{ domains_to_request }}"
+
+    - name: Confirm certificate request
+      pause:
+        prompt: "Continue with certificate request? (Press Enter to continue, Ctrl+C to abort)"
+      when: not ssl_staging
+
+    - name: Stop nginx before certificate request
+      service:
+        name: nginx
+        state: stopped
+
+    - name: Request Let's Encrypt certificates (staging)
+      command: >
+        /usr/pkg/bin/certbot certonly --standalone
+        --email {{ ssl_email }}
+        --agree-tos
+        --no-eff-email
+        --staging
+        --domains {{ domains_to_request | join(',') }}
+      register: certbot_staging_result
+      when: 
+        - ssl_staging
+        - domains_to_request | length > 0
+
+    - name: Request Let's Encrypt certificates (production)
+      command: >
+        /usr/pkg/bin/certbot certonly --standalone
+        --email {{ ssl_email }}
+        --agree-tos
+        --no-eff-email
+        --domains {{ domains_to_request | join(',') }}
+      register: certbot_prod_result
+      when: 
+        - not ssl_staging
+        - domains_to_request | length > 0
+
+    - name: Start nginx after certificate request
+      service:
+        name: nginx
+        state: started
+
+    - name: Show certificate request results (staging)
+      debug:
+        msg: "{{ certbot_staging_result.stdout_lines }}"
+      when: 
+        - ssl_staging
+        - certbot_staging_result is defined
+
+    - name: Show certificate request results (production)
+      debug:
+        msg: "{{ certbot_prod_result.stdout_lines }}"
+      when: 
+        - not ssl_staging
+        - certbot_prod_result is defined
+
+    - name: Test nginx configuration after certificate setup
+      command: /usr/pkg/sbin/nginx -t
+      register: nginx_test
+      changed_when: false
+
+    - name: Reload nginx to use new certificates
+      service:
+        name: nginx
+        state: reloaded
+      when: nginx_test.rc == 0
+
+    - name: Run certificate detection to update facts
+      include_tasks: roles/netbsd-nginx/tasks/detect_ssl_certificates.yml
+
+    - name: Display final certificate status
+      command: /usr/pkg/bin/certbot certificates
+      register: final_certs
+      changed_when: false
+
+    - name: Show installed certificates
+      debug:
+        msg: "{{ final_certs.stdout_lines }}"
+
+    - name: Display setup summary
+      debug:
+        msg:
+          - "=== Let's Encrypt Setup Complete ==="
+          - "Staging mode: {{ ssl_staging }}"
+          - "Requested domains: {{ domains_to_request }}"
+          - "Available certificates: {{ letsencrypt_available_certs | default([]) }}"
+          - "Primary certificate domain: {{ primary_letsencrypt_domain | default('none') }}"
+          - ""
+          - "Next steps:"
+          - "- Verify certificates: certbot certificates"
+          - "- Test renewal: certbot renew --dry-run"
+          - "- Check nginx config: nginx -t"

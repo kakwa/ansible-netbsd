@@ -39,6 +39,9 @@
     group: wheel
     mode: '0755'
 
+- name: Include SSL certificate detection tasks
+  include_tasks: detect_ssl_certificates.yml
+
 - name: Include SSL certificate tasks
   include_tasks: setup_ssl.yml
 

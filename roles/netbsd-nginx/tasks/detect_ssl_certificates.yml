@@ -1,0 +1,42 @@
+---
+# Detect available SSL certificates and set facts for nginx configurations
+
+- name: Check if Let's Encrypt directory exists
+  stat:
+    path: "/usr/pkg/etc/letsencrypt/live"
+  register: letsencrypt_dir_check
+
+- name: Find available Let's Encrypt certificates
+  find:
+    paths: "/usr/pkg/etc/letsencrypt/live"
+    file_type: directory
+    excludes: "README"
+  register: letsencrypt_certificates
+  when: letsencrypt_dir_check.stat.exists
+
+- name: Set letsencrypt_available_certs fact
+  set_fact:
+    letsencrypt_available_certs: "{{ letsencrypt_certificates.files | map(attribute='path') | map('basename') | list }}"
+  when: letsencrypt_dir_check.stat.exists and letsencrypt_certificates.files is defined
+
+- name: Set letsencrypt_available_certs fact when no certificates found
+  set_fact:
+    letsencrypt_available_certs: []
+  when: not letsencrypt_dir_check.stat.exists or letsencrypt_certificates.files is not defined
+
+- name: Set primary certificate domain (first available if any)
+  set_fact:
+    primary_letsencrypt_domain: "{{ letsencrypt_available_certs[0] | default('') }}"
+  when: letsencrypt_available_certs | length > 0
+
+- name: Set primary certificate domain when none available
+  set_fact:
+    primary_letsencrypt_domain: ""
+  when: letsencrypt_available_certs | length == 0
+
+- name: Debug certificate detection results
+  debug:
+    msg:
+      - "Let's Encrypt directory exists: {{ letsencrypt_dir_check.stat.exists }}"
+      - "Available certificates: {{ letsencrypt_available_certs }}"
+      - "Primary certificate domain: {{ primary_letsencrypt_domain }}"

@@ -1,0 +1,50 @@
+---
+# Standalone playbook for refreshing Let's Encrypt certificates
+# Usage:
+#   # Dry run (default - safe to run anytime)
+#   ansible-playbook refresh-certificates.yml
+#
+#   # Actual renewal (only renews if certificates are due)
+#   ansible-playbook refresh-certificates.yml -e letsencrypt_dry_run=false
+#
+#   # Force renewal (renews all certificates regardless of expiry)
+#   ansible-playbook refresh-certificates.yml -e letsencrypt_dry_run=false -e letsencrypt_force=true
+
+- name: Refresh Let's Encrypt Certificates
+  hosts: all
+  become: true
+  vars:
+    letsencrypt_dry_run: true  # Set to false for actual renewal
+    letsencrypt_force: false   # Set to true to force renewal
+  
+  tasks:
+    - name: Include nginx defaults
+      include_vars: roles/netbsd-nginx/defaults/main.yml
+
+    - name: Run certificate refresh tasks
+      include_tasks: roles/netbsd-nginx/tasks/refresh_certificates.yml
+
+    - name: Force certificate renewal (if requested)
+      command: /usr/pkg/bin/certbot renew --nginx --force-renewal
+      register: forced_renewal
+      when: 
+        - not letsencrypt_dry_run
+        - letsencrypt_force | default(false)
+
+    - name: Show forced renewal results
+      debug:
+        msg: "{{ forced_renewal.stdout_lines }}"
+      when: 
+        - not letsencrypt_dry_run
+        - letsencrypt_force | default(false)
+        - forced_renewal is defined
+
+    - name: Final nginx reload after forced renewal
+      service:
+        name: nginx
+        state: reloaded
+      when: 
+        - not letsencrypt_dry_run
+        - letsencrypt_force | default(false)
+        - forced_renewal is defined
+        - forced_renewal.rc == 0

@@ -25,33 +25,55 @@
   args:
     creates: /usr/pkg/etc/nginx/ssl/selfsigned.crt
 
-#- name: Request SSL certificates with certbot (production)
-#  command: >
-#    certbot certonly --nginx
-#    --email {{ ssl_email }}
-#    --agree-tos
-#    --no-eff-email
-#    --domains {{ ttrss_domain }},{{ static_domain }}
-#    {% for proxy in reverse_proxies %}
-#    ,{{ proxy.domain }}
-#    {% endfor %}
-#    {% if ssl_staging %}--staging{% endif %}
-#  register: certbot_result
-#  when: ssl_staging == false
-#  ignore_errors: true
-#
-#- name: Request staging SSL certificates with certbot
-#  command: >
-#    certbot certonly --nginx
-#    --email {{ ssl_email }}
-#    --agree-tos
-#    --no-eff-email
-#    --staging
-#    --domains {{ ttrss_domain }},{{ static_domain }}
-#    {% for proxy in reverse_proxies %}
-#    ,{{ proxy.domain }}
-#    {% endfor %}
-#  register: certbot_staging_result
-#  when: ssl_staging == true
-#  ignore_errors: true
-#
+- name: Collect all domains for certificate request
+  set_fact:
+    all_domains: "{{ ([ttrss_domain] if ttrss_domain is defined else []) + 
+                     (static_sites | map(attribute='domain') | list) + 
+                     (reverse_proxies | map(attribute='domain') | list) }}"
+
+- name: Request SSL certificates with certbot (production)
+  command: >
+    /usr/pkg/bin/certbot certonly --nginx
+    --email {{ ssl_email }}
+    --agree-tos
+    --no-eff-email
+    --domains {{ all_domains | join(',') }}
+    {% if ssl_staging %}--staging{% endif %}
+  register: certbot_result
+  when: 
+    - not ssl_staging
+    - all_domains | length > 0
+    - letsencrypt_request_enabled | default(false)
+  ignore_errors: true
+
+- name: Show certbot production results
+  debug:
+    msg: "{{ certbot_result.stdout_lines }}"
+  when: 
+    - not ssl_staging
+    - all_domains | length > 0
+    - letsencrypt_request_enabled | default(false)
+    - certbot_result is defined
+- name: Request staging SSL certificates with certbot
+  command: >
+    /usr/pkg/bin/certbot certonly --nginx
+    --email {{ ssl_email }}
+    --agree-tos
+    --no-eff-email
+    --staging
+    --domains {{ all_domains | join(',') }}
+  register: certbot_staging_result
+  when: 
+    - ssl_staging
+    - all_domains | length > 0
+    - letsencrypt_request_enabled | default(false)
+  ignore_errors: true
+
+- name: Show certbot staging results
+  debug:
+    msg: "{{ certbot_staging_result.stdout_lines }}"
+  when: 
+    - ssl_staging
+    - all_domains | length > 0
+    - letsencrypt_request_enabled | default(false)
+    - certbot_staging_result is defined

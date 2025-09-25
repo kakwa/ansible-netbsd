@@ -1,8 +1,3 @@
-- name: Check if Let's Encrypt certificates exist for {{ item.name }}
-  stat:
-    path: "/usr/pkg/etc/letsencrypt/live/{{ item.domain }}/fullchain.pem"
-  register: letsencrypt_cert_check
-
 - name: Create static website directory for {{ item.name }}
   file:
     path: "{{ item.root }}"
