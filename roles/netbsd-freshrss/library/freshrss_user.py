@@ -47,11 +47,6 @@ options:
             - Default language for the user
         type: str
         default: 'en'
-    timezone:
-        description:
-            - Default timezone for the user (set after user creation via update)
-        type: str
-        default: 'UTC'
     token:
         description:
             - Authentication token for the user
@@ -239,7 +234,7 @@ class FreshRssUserManager:
         returncode, stdout, stderr = self._run_command(cmd)
         return returncode == 0, stdout, stderr
 
-    def update_user(self, username, password=None, email=None, language=None, timezone=None):
+    def update_user(self, username, password=None, email=None, language=None):
         """Update user information"""
         cmd = [self.php_binary, os.path.join(self.cli_path, 'update-user.php')]
         cmd.extend(['--user', username])
@@ -250,8 +245,6 @@ class FreshRssUserManager:
             cmd.extend(['--email', email])
         if language:
             cmd.extend(['--language', language])
-        if timezone:
-            cmd.extend(['--timezone', timezone])
 
         returncode, stdout, stderr = self._run_command(cmd)
         return returncode == 0, stdout, stderr
@@ -284,7 +277,6 @@ def main():
         email=dict(type='str'),
         api_password=dict(type='str', no_log=True),
         language=dict(type='str', default='en'),
-        timezone=dict(type='str', default='UTC'),
         token=dict(type='str', no_log=True),
         purge_after_months=dict(type='int'),
         feed_min_articles_default=dict(type='int'),
@@ -318,7 +310,6 @@ def main():
     email = module.params['email']
     api_password = module.params['api_password']
     language = module.params['language']
-    timezone = module.params['timezone']
     token = module.params['token']
     purge_after_months = module.params['purge_after_months']
     feed_min_articles_default = module.params['feed_min_articles_default']
@@ -351,13 +342,6 @@ def main():
                 result['changed'] = True
                 result['msg'] = f"User {username} created successfully"
                 result['user_exists'] = True
-
-                # If timezone was specified, try to update it after creation
-                if timezone and timezone != 'UTC':
-                    tz_success, tz_stdout, tz_stderr = manager.update_user(username, timezone=timezone)
-                    if not tz_success:
-                        # Don't fail completely, but warn about timezone
-                        result['msg'] += f" (Warning: Could not set timezone: {tz_stderr})"
             else:
                 module.fail_json(msg=f"Failed to create user {username}: {stderr}")
         else:
@@ -377,10 +361,6 @@ def main():
             if language and user_info.get('language', '') != language:
                 changes_needed['language'] = language
 
-            # Check timezone
-            if timezone and user_info.get('timezone', '') != timezone:
-                changes_needed['timezone'] = timezone
-
             if changes_needed:
                 if module.check_mode:
                     result['changed'] = True
@@ -392,7 +372,6 @@ def main():
                     password=changes_needed.get('password'),
                     email=changes_needed.get('email'),
                     language=changes_needed.get('language'),
-                    timezone=changes_needed.get('timezone')
                 )
 
                 if success:
