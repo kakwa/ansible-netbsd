@@ -77,6 +77,17 @@
   ignore_errors: true
   when: schema_check.stdout == ""
 
+- name: Create TT-RSS admin user
+  ttrss_user:
+    name: "{{ ttrss_admin_user }}"
+    password: "{{ ttrss_admin_password }}"
+    access_level: 10
+    api_enabled: true
+    state: present
+    php_binary: "/usr/pkg/bin/php83"
+    ttrss_path: "/usr/pkg/share/tt-rss"
+  become: true
+
 - name: Create TT-RSS htpasswd file for nginx authentication
   htpasswd:
     path: /usr/pkg/etc/nginx/.htpasswd_ttrss

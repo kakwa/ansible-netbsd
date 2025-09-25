@@ -9,9 +9,13 @@ ttrss_admin_email: "admin@example.com"
 ttrss_single_user_mode: false
 
 # Database connection (for TTRSS)
-ttrs_db_name: "ttrss"
-ttrs_db_user: "ttrss"
-ttrs_db_password: "{{ vault_postgresql_password | default('changeme123') }}"
+ttrss_db_name: "ttrss"
+ttrss_db_user: "ttrss"
+ttrss_db_password: "{{ vault_postgresql_password | default('changeme123') }}"
 ttrss_db_host: "localhost"
 ttrss_db_port: 5432
+
+# Authentication for nginx htpasswd
+ttrss_auth_user: "{{ ttrss_admin_user }}"
+ttrss_auth_password: "{{ ttrss_admin_password }}"
 php_fpm_listen: "/var/run/php-fpm83"

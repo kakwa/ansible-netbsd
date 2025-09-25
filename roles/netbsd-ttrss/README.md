@@ -7,6 +7,7 @@ This Ansible role sets up Tiny Tiny RSS (TTRSS) with PHP-FPM on NetBSD.
 - **PHP 8.3**: With FPM and all required extensions for Tiny Tiny RSS
 - **Tiny Tiny RSS**: Self-hosted RSS reader application
 - **Database Integration**: PostgreSQL database connection
+- **User Management**: Custom Ansible module for managing TT-RSS users
 - **Security**: Hardened PHP configurations with security best practices
 
 ## Requirements
@@ -28,6 +29,10 @@ ttrss_admin_user: "admin"
 ttrss_admin_password: "{{ vault_ttrss_admin_password }}"
 ttrss_admin_email: "admin@example.com"
 ttrss_single_user_mode: false
+
+# Authentication for nginx htpasswd (defaults to admin user/password)
+ttrss_auth_user: "{{ ttrss_admin_user }}"
+ttrss_auth_password: "{{ ttrss_admin_password }}"
 ```
 
 ### Database Configuration
@@ -88,11 +93,34 @@ php_fpm_pm_max_spare_servers: 35
 - Restricted file access and permissions
 - Secure PHP-FPM configuration
 
+## Custom Modules
+
+This role includes a custom Ansible module for managing TT-RSS users:
+
+### ttrss_user Module
+
+```yaml
+- name: Create a TT-RSS user
+  ttrss_user:
+    name: myuser
+    password: mypassword
+    access_level: 0  # 0=user, 10=admin
+    api_enabled: true
+    state: present
+
+- name: Remove a TT-RSS user
+  ttrss_user:
+    name: olduser
+    state: absent
+```
+
 ## File Structure
 
 ```
 roles/netbsd-ttrss/
 ├── defaults/main.yml          # Default variables
+├── library/
+│   └── ttrss_user.py         # Custom TT-RSS user management module
 ├── tasks/
 │   ├── main.yml              # Main task orchestration
 │   └── setup_ttrss.yml       # Tiny Tiny RSS setup
