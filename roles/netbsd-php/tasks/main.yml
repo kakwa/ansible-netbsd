@@ -25,6 +25,13 @@
     creates: /usr/pkg/include/php/8.3/ext/pdo/php_pdo.h
   become: true
 
+- name: Build and install PHP-INT from pkgsrc
+  command: make install
+  args:
+    chdir: /usr/pkgsrc/textproc/php-intl
+    creates: /usr/pkg/share/examples/php/8.3/intl.ini
+  become: true
+
 - name: Install php_fpm83 init script
   ansible.builtin.copy:
     src: /usr/pkg/share/examples/rc.d/php_fpm83

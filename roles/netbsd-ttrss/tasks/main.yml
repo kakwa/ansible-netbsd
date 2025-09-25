@@ -38,6 +38,13 @@
     group: "{{ php_fpm_group }}"
     mode: '0640'
 
+- name: Build and install PHP-INT from pkgsrc
+  command: /usr/pkg/share/tt-rss/update.php && touch /usr/pkg/share/tt-rss/db.inited
+  args:
+    chdir: /usr/pkg/share/tt-rss
+    creates: /usr/pkg/share/tt-rss/db.inited
+  become: true
+
 - name: Create TT-RSS htpasswd file for nginx authentication
   htpasswd:
     path: /usr/pkg/etc/nginx/.htpasswd_ttrss
