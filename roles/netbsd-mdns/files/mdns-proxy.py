@@ -8,6 +8,9 @@ import syslog
 import time
 import dns.message
 import dns.rdatatype
+import dns.rrset
+import dns.rdata
+import dns.rdataclass
 
 # Multicast address/port for mDNS
 MDNS_ADDR = "224.0.0.251"
@@ -54,6 +57,28 @@ def remove_pid_file(pid_file):
             log_message(f"Removed PID file: {pid_file}")
     except Exception as e:
         log_message(f"Failed to remove PID file {pid_file}: {e}", syslog.LOG_WARNING)
+
+def create_fallback_response(query, fallback_ip="127.0.0.1"):
+    """Create a fallback response with the specified IP address"""
+    try:
+        # Create response message
+        response = dns.message.make_response(query)
+
+        # Get the question
+        question = query.question[0]
+        qname = question.name
+        qtype = question.rdtype
+
+        # Only respond to A record queries with our fallback IP
+        if qtype == dns.rdatatype.A:
+            # Create an A record with the fallback IP
+            rrset = dns.rrset.from_text(qname, 300, dns.rdataclass.IN, dns.rdatatype.A, fallback_ip)
+            response.answer.append(rrset)
+
+        return response
+    except Exception as e:
+        log_message(f"Error creating fallback response: {e}", syslog.LOG_ERR)
+        return None
 
 def daemonize():
     """Daemonize the process"""
@@ -137,9 +162,21 @@ def run_proxy():
                 response.id = query.id
 
                 dns_sock.sendto(response.to_wire(), addr)
-                log_message(f"Sent response for {qname} to {addr}")
+                log_message(f"Sent mDNS response for {qname} to {addr}")
             except socket.timeout:
-                log_message("No mDNS reply received")
+                log_message(f"No mDNS reply received for {qname}, sending fallback response")
+                # Send fallback response with 127.0.0.1
+                fallback_response = create_fallback_response(query)
+                if fallback_response:
+                    dns_sock.sendto(fallback_response.to_wire(), addr)
+                    log_message(f"Sent fallback response (127.0.0.1) for {qname} to {addr}")
+            except Exception as mdns_error:
+                log_message(f"mDNS error for {qname}: {mdns_error}, sending fallback response")
+                # Send fallback response on any mDNS error
+                fallback_response = create_fallback_response(query)
+                if fallback_response:
+                    dns_sock.sendto(fallback_response.to_wire(), addr)
+                    log_message(f"Sent fallback response (127.0.0.1) for {qname} to {addr}")
 
         except socket.timeout:
             # This is expected - allows us to check shutdown_flag periodically
