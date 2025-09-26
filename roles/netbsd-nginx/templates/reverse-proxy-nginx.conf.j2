@@ -68,6 +68,9 @@ server {
         proxy_send_timeout 60s;
         proxy_read_timeout 60s;
         
+        # Handle DNS resolution failures gracefully
+        proxy_next_upstream error timeout invalid_header http_500 http_502 http_503 http_504;
+
         # Buffer settings
         proxy_buffering on;
         proxy_buffer_size 4k;

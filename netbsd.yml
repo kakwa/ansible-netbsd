@@ -22,7 +22,6 @@
     - { role: netbsd-python, tags: ["system", "netbsd-python"] }
     - { role: netbsd-misc-packages, tags: ["system", "netbsd-misc-packages"] }
     - { role: netbsd-misc, tags: ["system", "netbsd-misc"] }
-    - { role: netbsd-mdns, tags: ["system", "netbsd-mdns"] }
     - role: netbsd-nginx
       tags: ["service", "netbsd-nginx"]
       vars:

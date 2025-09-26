@@ -53,21 +53,21 @@
         reverse_proxies:
           - name: "voron0"
             domain: "voron0.kakwalab.ovh"
-            upstream: "https://192.168.1.92/"
+            upstream: "https://voron0.local/"
             ssl_verify: false
             auth_enabled: true
             auth_user: "kakwa"
             auth_password: "{{ vault_proxy_password | default(lookup('password', './proxy.password.txt chars=ascii_letters,digits length=16')) }}"
           - name: "ender3"
             domain: "ender3.kakwalab.ovh"
-            upstream: "https://192.168.1.27/"
+            upstream: "https://ender3.local/"
             ssl_verify: false
             auth_enabled: true
             auth_user: "kakwa"
             auth_password: "{{ vault_proxy_password | default(lookup('password', './proxy.password.txt chars=ascii_letters,digits length=16')) }}"
           - name: "rockrobo"
             domain: "rockrobo.kakwalab.ovh"
-            upstream: "http://192.168.1.37/"
+            upstream: "http://rockrobo.local/"
             ssl_verify: true
             auth_enabled: true
             auth_user: "kakwa"
