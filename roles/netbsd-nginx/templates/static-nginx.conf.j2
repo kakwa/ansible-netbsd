@@ -34,9 +34,16 @@ server {
     root {{ item.root }};
     index {{ item.index }} index.html index.htm;
 
+    {% if item.autoindex | default(false) %}
+    charset UTF-8;
+    autoindex on;
+    autoindex_exact_size on;
+    autoindex_format html;
+    autoindex_localtime on;
+    {% endif %}
 
-    # Basic authentication
     {% if item.auth_enabled | default(false) %}
+    # Basic authentication
     auth_basic "Restricted Access";
     auth_basic_user_file /usr/pkg/etc/nginx/.htpasswd.{{ item.name }};
     {% endif %}
@@ -47,7 +54,7 @@ server {
 
     # Handle static files with caching
     location ~* \.(css|js|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
-        expires 1y;
+        expires 1d;
         add_header Cache-Control "public, immutable";
         try_files $uri =404;
     }

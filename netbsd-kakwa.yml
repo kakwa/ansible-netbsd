@@ -36,6 +36,11 @@
             domain: "sun.kakwalab.ovh"
             root: "/var/www/sun"
             index: "index.html"
+          - name: "netbsd"
+            domain: "netbsd.kakwalab.ovh"
+            root: "/var/www/netbsd"
+            autoindex: true
+            index: ""
         reverse_proxies:
           - name: "voron0"
             domain: "voron0.kakwalab.ovh"
