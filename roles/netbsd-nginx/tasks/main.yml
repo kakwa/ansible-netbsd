@@ -136,3 +136,12 @@
     state: started
     enabled: true
   become: true
+
+- name: Add cron job for nginx status monitoring and auto-restart
+  ansible.builtin.cron:
+    name: "nginx status check and restart"
+    minute: "*/15"
+    job: "/etc/rc.d/nginx status || /etc/rc.d/nginx restart"
+    user: root
+    state: present
+  when: nginx_cron_monitoring_enabled | default(true)
