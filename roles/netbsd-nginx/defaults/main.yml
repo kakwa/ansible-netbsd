@@ -49,3 +49,23 @@ nginx_dns_resolvers: ["127.0.0.1", "8.8.8.8", "8.8.4.4"]
 nginx_dns_valid_time: "10s"  # Shorter cache for .local domains
 nginx_dns_timeout: "5s"
 nginx_dns_ipv6: false
+
+# Default virtual host configuration
+default_vhost_enabled: true
+default_vhost_server_name: "_"  # Catch-all server name
+default_vhost_root: "/usr/pkg/share/nginx/html"
+default_vhost_index: "index.html index.htm"
+default_vhost_error_pages_root: "/usr/pkg/share/nginx"
+default_vhost_access_log: "/var/log/nginx/default_access.log"
+default_vhost_error_log: "/var/log/nginx/default_error.log"
+default_vhost_ssl_enabled: false
+default_vhost_ssl_cert: "/etc/ssl/certs/nginx-selfsigned.crt"
+default_vhost_ssl_key: "/etc/ssl/private/nginx-selfsigned.key"
+
+# Branding customization for default pages and error pages
+# Set these variables in your playbook to customize the branding
+# Example for KakwaLab:
+#   nginx_branding: "KakwaLab (c) 2025"
+#   nginx_page_title: "KakwaLab Server"
+nginx_branding: "NetBSD • nginx"  # Default branding shown at bottom of pages
+nginx_page_title: "Welcome to nginx on NetBSD"  # Title for default index page

@@ -41,6 +41,9 @@
       tags: ["service", "netbsd-nginx"]
       vars:
         nginx_dns_resolvers: ["127.0.0.1"]
+        # Default page branding
+        nginx_branding: "kakwalab"
+        nginx_page_title: "Welcome in Kakwalab"
         static_sites:
           - name: "lens"
             domain: "lens.kakwalab.ovh"

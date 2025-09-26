@@ -40,6 +40,69 @@
     group: wheel
     mode: '0755'
 
+- name: Create error pages directory
+  file:
+    path: "{{ default_vhost_error_pages_root }}/errors"
+    state: directory
+    owner: root
+    group: wheel
+    mode: '0755'
+  when: default_vhost_enabled | default(true)
+
+- name: Generate custom error pages from templates
+  template:
+    src: "error-pages/{{ item }}.j2"
+    dest: "{{ default_vhost_error_pages_root }}/errors/{{ item }}"
+    owner: root
+    group: wheel
+    mode: '0644'
+  loop:
+    - "404.html"
+    - "500.html"
+    - "502.html"
+    - "503.html"
+    - "504.html"
+  when: default_vhost_enabled | default(true)
+
+- name: Create symlink for 50x errors
+  file:
+    src: "{{ default_vhost_error_pages_root }}/errors/500.html"
+    dest: "{{ default_vhost_error_pages_root }}/errors/50x.html"
+    state: link
+    owner: root
+    group: wheel
+  when: default_vhost_enabled | default(true)
+
+- name: Generate default index page from template
+  template:
+    src: "default-index.html.j2"
+    dest: "{{ default_vhost_root }}/index.html"
+    owner: root
+    group: wheel
+    mode: '0644'
+    force: false  # Don't overwrite if it already exists
+  when: default_vhost_enabled | default(true)
+
+- name: Configure default virtual host
+  template:
+    src: default-vhost.conf.j2
+    dest: /usr/pkg/etc/nginx/sites-available/000-default
+    owner: root
+    group: wheel
+    mode: '0644'
+  notify: restart nginx
+  when: default_vhost_enabled | default(true)
+
+- name: Enable default virtual host
+  file:
+    src: /usr/pkg/etc/nginx/sites-available/000-default
+    dest: /usr/pkg/etc/nginx/sites-enabled/000-default
+    state: link
+    owner: root
+    group: wheel
+  notify: restart nginx
+  when: default_vhost_enabled | default(true)
+
 - name: Include SSL certificate detection tasks
   include_tasks: detect_ssl_certificates.yml
 
