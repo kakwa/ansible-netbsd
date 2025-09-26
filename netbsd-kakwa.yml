@@ -70,6 +70,7 @@
     - role: netbsd-freshrss
       tags: ["app", "netbsd-freshrss"]
       vars:
+        basic_auth_enabled: false
         freshrss_domain: "rss.kakwalab.ovh"
         freshrss_db_name: "freshrss"
         freshrss_db_user: "freshrss"
