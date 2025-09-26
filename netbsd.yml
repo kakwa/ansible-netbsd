@@ -1,5 +1,5 @@
 ---
-- name: NetBSD Server Setup
+- name: NetBSD Server Setup Example
   hosts: all
   become: true
   vars:
@@ -20,8 +20,6 @@
     - { role: netbsd-pkgin, tags: ["system", "netbsd-pkgin"] }
     - { role: netbsd-pkgsrc, tags: ["system", "netbsd-pkgsrc"] }
     - { role: netbsd-python, tags: ["system", "netbsd-python"] }
-    - { role: vim, tags: ["system", "vim"] }
-    - { role: zsh, tags: ["system", "zsh"] }
     - { role: netbsd-misc-packages, tags: ["system", "netbsd-misc-packages"] }
     - { role: netbsd-mdns, tags: ["system", "netbsd-mdns"] }
     - role: netbsd-nginx
