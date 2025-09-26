@@ -6,7 +6,7 @@ python_version_full: "{{ python_version_major }}.{{ python_version_minor }}"
 python_version_short: "{{ python_version_major }}{{ python_version_minor }}"
 
 # Derived Python package names and paths
-python_binary: "python{{ python_version_short }}"
+python_binary: "python{{ python_version_full }}"
 python_package_prefix: "py{{ python_version_short }}"
 python_package_name: "python{{ python_version_short }}"
 
