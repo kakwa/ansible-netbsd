@@ -1,67 +1,45 @@
 # ansible-netbsd
-roles for my netbsd server
 
-## Bootstrap Setup
+Roles for my netbsd server.
+
+## Bootstrap
 
 Before running the Ansible playbooks, you'll need to set up the NetBSD system with some basic prerequisites:
 
-### 1. Install pkgin
 
 ```bash
+# Install pkgin
 pkg_add https://cdn.NetBSD.org/pub/pkgsrc/packages/NetBSD/`uname -m`/`uname -r`/All/pkgin
-```
 
-### 2. Install sudo and Python
-
-```bash
+# Install sudo and Python
 pkgin update
 pkgin install sudo python312  # or your preferred Python version
-```
 
-### 3. Add user to wheel group
-
-Add your user to the wheel group to allow sudo access:
-
-```bash
+# Add your user to the wheel group to allow sudo access:
 LOGIN_USER="your_user_login"
-
 # As root:
 usermod -G wheel $LOGIN_USER
 ```
 
 After completing these steps, you should be able to run the Ansible playbooks against your NetBSD system.
 
-## Setup
-
-Before using the playbooks, initialize the git submodules:
-
-```bash
-git submodule update --init
-```
-
 ## Customization
 
 The `netbsd.yml` file is an example playbook that you should copy and customize for your needs:
 
 ```bash
-cp netbsd.yml my-server.yml
+# Copy example playbook
+cp netbsd.yml netbsd-myserver.yml
+
+# Customize it
+vim netbsd-myserver.yml
 ```
 
-Then edit `my-server.yml` to customize:
-- Domain names (replace `example.com` with your actual domains)
-- IP addresses and ports for reverse proxies
-- Static site configurations
-- Database names and users
+By default, the playbook includes the following roles:
 
-### What the playbook installs
-
-The playbook includes the following roles and components by default:
-
-- **os-release**: Sets up OS release information
+- **os-release**: Sets up OS release file
 - **netbsd-pkgin**: Configures pkgin package manager
 - **netbsd-pkgsrc**: Sets up pkgsrc build system
-- **vim**: Installs and configures Vim editor
-- **zsh**: Installs and configures Zsh shell
 - **netbsd-misc-packages**: Installs various utility packages
 - **netbsd-mdns**: Sets up mDNS/Bonjour service discovery
 - **netbsd-nginx**:
@@ -69,7 +47,7 @@ The playbook includes the following roles and components by default:
   - Static site hosting
   - Reverse proxy configuration with authentication
 - **netbsd-postgresql**: PostgreSQL database server
-- **netbsd-ttrss**: Tiny Tiny RSS feed reader
+- **netbsd-freshrss**: FreshRSS feed reader
 
 Don't hesitate to tweak it to your needs.
 
@@ -101,20 +79,14 @@ echo "$SERVER_IP" > inventory
 ansible-playbook -i inventory -u $LOGIN_USER netbsd.yml
 ```
 
-## Configuration
+## Secrets
 
-Some roles require password files to be present. Create these files in the project root directory:
+By default, the main playbook will auto-generate passwords & secret and store in `*.password.txt` files:
 
 ```bash
-# Create password files with your desired passwords
-echo "your_proxy_password" > proxy.password.txt
-echo "your_ttrss_db_password" > ttrss_db.password.txt
+ls *.password.txt
 
-# Verify the files were created correctly
-cat proxy.password.txt
-cat ttrss_db.password.txt
+cat *.password.txt
 ```
 
-These files should contain the respective passwords in plain text and will be used by the playbooks for authentication and database setup.
-
-**Note:** If these password files are not present, the playbooks will automatically generate files and respective passwords for you.
+Values can be overriden, or you could setup [ansible-vault](https://docs.ansible.com/ansible/latest/vault_guide/index.html) to more cleanly manage them.
