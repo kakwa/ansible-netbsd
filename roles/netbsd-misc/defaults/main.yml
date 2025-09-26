@@ -1,0 +1,6 @@
+---
+# Enable ntpd service
+netbsd_misc_enable_ntpd: true
+
+# Enable sshd service
+netbsd_misc_enable_sshd: true

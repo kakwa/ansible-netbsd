@@ -1,0 +1,38 @@
+---
+- name: Enable ntpd in rc.conf
+  ansible.builtin.lineinfile:
+    path: /etc/rc.conf
+    line: 'ntpd=YES'
+    regexp: '^ntpd='
+    state: present
+    backup: yes
+  notify: restart ntpd
+  become: true
+  when: netbsd_misc_enable_ntpd | default(true)
+
+- name: Enable sshd in rc.conf
+  ansible.builtin.lineinfile:
+    path: /etc/rc.conf
+    line: 'sshd=YES'
+    regexp: '^sshd='
+    state: present
+    backup: yes
+  notify: restart sshd
+  become: true
+  when: netbsd_misc_enable_sshd | default(true)
+
+- name: Start and enable ntpd service
+  ansible.builtin.service:
+    name: ntpd
+    state: started
+    enabled: true
+  become: true
+  when: netbsd_misc_enable_ntpd | default(true)
+
+- name: Start and enable sshd service
+  ansible.builtin.service:
+    name: sshd
+    state: started
+    enabled: true
+  become: true
+  when: netbsd_misc_enable_sshd | default(true)
