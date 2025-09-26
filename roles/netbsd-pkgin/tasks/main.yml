@@ -11,6 +11,7 @@
     url: "https://cdn.netbsd.org/pub/pkgsrc/packages/NetBSD/{{ arch }}/"
     return_content: yes
   register: repo_index
+  when: pkgin_use_official_repos and not pkgin_only_custom_repos
 
 - name: Extract repository directories for major version
   set_fact:
@@ -18,11 +19,22 @@
       {{ repo_index.content | regex_findall('href="([^/]+/)"')
          | select('match', '^' ~ (major_version | string))
          | list }}
+  when: pkgin_use_official_repos and not pkgin_only_custom_repos
 
-- name: Build full repository URLs
+- name: Build official repository URLs
   set_fact:
-    pkgin_repo_urls: >-
+    pkgin_official_repo_urls: >-
       {{ pkgin_repos | map('regex_replace', '^(.*)$', 'https://cdn.netbsd.org/pub/pkgsrc/packages/NetBSD/' ~ arch ~ '/\1All') | list }}
+  when: pkgin_use_official_repos and not pkgin_only_custom_repos
+
+- name: Initialize empty official repos list if not using them
+  set_fact:
+    pkgin_official_repo_urls: []
+  when: not pkgin_use_official_repos or pkgin_only_custom_repos
+
+- name: Combine official and custom repository URLs
+  set_fact:
+    pkgin_repo_urls: "{{ pkgin_official_repo_urls + pkgin_custom_repo_urls }}"
 
 - name: Ensure pkgin repositories.conf is configured
   template:

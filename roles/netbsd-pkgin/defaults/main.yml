@@ -1,0 +1,5 @@
+---
+# pkgin repository configuration
+pkgin_use_official_repos: true        # Whether to auto-discover official NetBSD repositories
+pkgin_custom_repo_urls: []             # List of custom repository URLs to add
+pkgin_only_custom_repos: false        # If true, only use custom repos (ignore official ones)
