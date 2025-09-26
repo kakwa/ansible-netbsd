@@ -153,7 +153,7 @@ def run_proxy():
             mdns_sock.sendto(data, (MDNS_ADDR, MDNS_PORT))
 
             # Wait for a response
-            mdns_sock.settimeout(2)
+            mdns_sock.settimeout(0.5)
             try:
                 rdata, _ = mdns_sock.recvfrom(4096)
                 response = dns.message.from_wire(rdata)

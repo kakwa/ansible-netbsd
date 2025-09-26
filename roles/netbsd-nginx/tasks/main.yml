@@ -49,6 +49,15 @@
     mode: '0755'
   when: default_vhost_enabled | default(true)
 
+- name: Create default page directory
+  file:
+    path: "{{ default_vhost_root }}/"
+    state: directory
+    owner: root
+    group: wheel
+    mode: '0755'
+  when: default_vhost_enabled | default(true)
+
 - name: Generate custom error pages from templates
   template:
     src: "error-pages/{{ item }}.j2"
