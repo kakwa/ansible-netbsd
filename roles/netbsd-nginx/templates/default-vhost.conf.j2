@@ -10,8 +10,15 @@ server {
     listen [::]:443 ssl http2 default_server;
     
     # SSL configuration for default vhost
-    ssl_certificate {{ default_vhost_ssl_cert | default('/etc/ssl/certs/nginx-selfsigned.crt') }};
-    ssl_certificate_key {{ default_vhost_ssl_key | default('/etc/ssl/private/nginx-selfsigned.key') }};
+    {% if primary_letsencrypt_domain | default('') != '' %}
+    # Use first available Let's Encrypt certificate
+    ssl_certificate /usr/pkg/etc/letsencrypt/live/{{ primary_letsencrypt_domain }}/fullchain.pem;
+    ssl_certificate_key /usr/pkg/etc/letsencrypt/live/{{ primary_letsencrypt_domain }}/privkey.pem;
+    {% else %}
+    # Use self-signed certificate as fallback
+    ssl_certificate {{ default_vhost_ssl_cert | default('/usr/pkg/etc/nginx/ssl/selfsigned.crt') }};
+    ssl_certificate_key {{ default_vhost_ssl_key | default('/usr/pkg/etc/nginx/ssl/selfsigned.key') }};
+    {% endif %}
     {% endif %}
     
     server_name {{ default_vhost_server_name | default('_') }};

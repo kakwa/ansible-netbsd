@@ -58,9 +58,9 @@ default_vhost_index: "index.html index.htm"
 default_vhost_error_pages_root: "/usr/pkg/share/nginx"
 default_vhost_access_log: "/var/log/nginx/default_access.log"
 default_vhost_error_log: "/var/log/nginx/default_error.log"
-default_vhost_ssl_enabled: false
-default_vhost_ssl_cert: "/etc/ssl/certs/nginx-selfsigned.crt"
-default_vhost_ssl_key: "/etc/ssl/private/nginx-selfsigned.key"
+default_vhost_ssl_enabled: true
+default_vhost_ssl_cert: "/usr/pkg/etc/nginx/ssl/selfsigned.crt"
+default_vhost_ssl_key: "/usr/pkg/etc/nginx/ssl/selfsigned.key"
 
 # Branding customization for default pages and error pages
 # Set these variables in your playbook to customize the branding
