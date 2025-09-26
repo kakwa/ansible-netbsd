@@ -36,7 +36,7 @@
       tags: ["system", "netbsd-mdns"]
       vars:
         mdns_enable_unbound_forwarder: true
-        mdns_dns_forwarders: "{{ ansible_dns.nameservers | default([]) }}"
+        mdns_dns_forwarders: ["192.168.1.254"]
     - role: netbsd-nginx
       tags: ["service", "netbsd-nginx"]
       vars:
