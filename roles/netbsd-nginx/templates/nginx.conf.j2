@@ -12,6 +12,13 @@ http {
     include       /usr/pkg/etc/nginx/mime.types;
     default_type  application/octet-stream;
 
+    {% if nginx_dns_resolvers is defined and nginx_dns_resolvers | length > 0 %}
+    # DNS resolver for dynamic resolution of upstream hostnames
+    # This enables nginx to resolve hostnames at runtime instead of startup
+    resolver {{ nginx_dns_resolvers | join(' ') }} valid={{ nginx_dns_valid_time }}{% if not nginx_dns_ipv6 %} ipv6=off{% endif %};
+    resolver_timeout {{ nginx_dns_timeout }};
+    {% endif %}
+
     # Logging
     log_format main '$remote_addr - $remote_user [$time_local] "$request" '
                     '$status $body_bytes_sent "$http_referer" '

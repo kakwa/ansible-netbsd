@@ -24,3 +24,36 @@
     state: started
     enabled: true
   become: true
+
+- name: Install unbound for DNS forwarding
+  community.general.pkgin:
+    name: "{{ mdns_packages }}"
+    state: present
+  when: mdns_enable_unbound_forwarder
+
+- name: Configure unbound for mDNS forwarding
+  template:
+    src: unbound.conf.j2
+    dest: /usr/pkg/etc/unbound/unbound.conf
+    owner: root
+    group: wheel
+    mode: '0644'
+  notify: restart unbound
+  when: mdns_enable_unbound_forwarder
+
+- name: Enable unbound in rc.conf
+  ansible.builtin.lineinfile:
+    path: /etc/rc.conf
+    line: 'unbound=YES'
+    regexp: '^unbound='
+    state: present
+    backup: yes
+  notify: restart unbound
+  when: mdns_enable_unbound_forwarder
+
+- name: Start and enable unbound service
+  ansible.builtin.service:
+    name: unbound
+    state: started
+    enabled: true
+  when: mdns_enable_unbound_forwarder

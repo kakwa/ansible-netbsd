@@ -1,0 +1,42 @@
+# Unbound configuration for mDNS forwarding
+# This allows applications to resolve .local domains via a local DNS server
+
+server:
+    # Listen on localhost only
+    interface: 127.0.0.1
+    port: 53
+    
+    # Access control
+    access-control: 127.0.0.0/8 allow
+    access-control: 0.0.0.0/0 refuse
+    
+    # Do not query the following addresses
+    do-not-query-localhost: no
+    
+    # Cache settings - short TTL for dynamic .local domains
+    cache-min-ttl: 0
+    cache-max-ttl: 60
+    
+    # Logging (minimal for production)
+    verbosity: 1
+    
+    # Use one thread (sufficient for local use)
+    num-threads: 1
+    
+    # Minimal memory usage
+    rrset-cache-size: 4m
+    msg-cache-size: 2m
+    
+    # Allow .local domains to be resolved without DNSSEC
+    domain-insecure: "local"
+    
+    # Use system resolver for .local domains
+    # This allows unbound to use NSS which includes mdnsd
+    local-zone: "local." transparent
+
+# Forward all queries except .local to upstream DNS servers
+forward-zone:
+    name: "."
+    {% for resolver in mdns_dns_forwarders | default(['8.8.8.8', '8.8.4.4', '1.1.1.1']) %}
+    forward-addr: {{ resolver }}
+    {% endfor %}

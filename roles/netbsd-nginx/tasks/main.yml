@@ -4,6 +4,7 @@
     name: "{{ nginx_packages }}"
     state: present
 
+
 - name: Install nginx init script
   ansible.builtin.copy:
     src: /usr/pkg/share/examples/rc.d/nginx

@@ -15,6 +15,7 @@ nginx_packages:
   - "{{ python_package_prefix }}-certbot-nginx"
   - "{{ python_package_prefix }}-passlib"
 
+
 # SSL configuration
 ssl_email: "admin@example.com"
 ssl_staging: false
@@ -40,3 +41,11 @@ nginx_hide_server_tokens: true
 nginx_ssl_protocols: "TLSv1.2 TLSv1.3"
 nginx_ssl_ciphers: "ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-AES128-SHA256:ECDHE-RSA-AES256-SHA384"
 nginx_ssl_prefer_server_ciphers: "on"
+
+# DNS resolution settings for dynamic upstream resolution
+# For .local domains (mDNS), include localhost resolver (127.0.0.1)
+# This requires the netbsd-mdns role to be configured with unbound forwarding enabled
+nginx_dns_resolvers: ["127.0.0.1", "8.8.8.8", "8.8.4.4"]
+nginx_dns_valid_time: "10s"  # Shorter cache for .local domains
+nginx_dns_timeout: "5s"
+nginx_dns_ipv6: false

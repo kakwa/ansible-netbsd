@@ -1,0 +1,12 @@
+---
+# mDNS configuration
+mdns_enable_unbound_forwarder: true
+mdns_dns_forwarders:
+  - "8.8.8.8"
+  - "8.8.4.4" 
+  - "1.1.1.1"
+  - "1.0.0.1"
+
+# Packages for mDNS support
+mdns_packages:
+  - unbound

@@ -32,10 +32,15 @@
     - { role: zsh, tags: ["system", "zsh"] }
     - { role: netbsd-misc-packages, tags: ["system", "netbsd-misc-packages"] }
     - { role: netbsd-misc, tags: ["system", "netbsd-misc"] }
-    - { role: netbsd-mdns, tags: ["system", "netbsd-mdns"] }
+    - role: netbsd-mdns
+      tags: ["system", "netbsd-mdns"]
+      vars:
+        mdns_enable_unbound_forwarder: true
+        mdns_dns_forwarders: "{{ ansible_dns.nameservers | default([]) }}"
     - role: netbsd-nginx
       tags: ["service", "netbsd-nginx"]
       vars:
+        nginx_dns_resolvers: ["127.0.0.1"]
         static_sites:
           - name: "lens"
             domain: "lens.kakwalab.ovh"
