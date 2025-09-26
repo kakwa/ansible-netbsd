@@ -1,0 +1,35 @@
+#!/bin/sh
+set -eu
+
+# Detect system info
+ARCH="$(uname -m)"
+VERSION="$(uname -r | cut -d. -f1)"
+
+# Source directory (where bulk build puts packages)
+SRC="/usr/pkgsrc/packages/All"
+
+# Publish directory (served by web server)
+DST="{{ pkgsrc_publish_base_dir }}/NetBSD/${ARCH}/${VERSION}/All"
+
+# Ensure directories exist
+if [ ! -d "$SRC" ]; then
+    echo "Error: source directory $SRC does not exist" >&2
+    exit 1
+fi
+mkdir -p "$DST"
+
+echo "==> Copying packages from $SRC to $DST..."
+rsync -av --progress "$SRC/" "$DST/"
+
+echo "==> Generating pkg_summary..."
+pkg_info -X "$DST"/*.tgz > "$DST/pkg_summary"
+
+echo "==> Compressing pkg_summary..."
+bzip2 -f -k "$DST/pkg_summary"
+gzip  -f -k "$DST/pkg_summary"
+
+echo "==> Cleaning up old summaries..."
+find "$DST" -name "pkg_summary.*~" -delete
+
+echo "==> Done."
+echo "Published packages are ready in $DST"

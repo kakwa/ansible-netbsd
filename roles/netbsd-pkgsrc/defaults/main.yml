@@ -8,3 +8,8 @@ pkgsrc_archive_name: "pkgsrc.tar.gz"
 # Cleanup options
 pkgsrc_cleanup_archive: true  # Remove the downloaded archive after extraction
 pkgsrc_force_download: false  # Force re-download even if pkgsrc already exists
+
+# publish-pkgs script options
+pkgsrc_deploy_publish_script: false  # Whether to deploy the publish-pkgs script
+pkgsrc_bin_path: "/usr/pkg/bin"      # Base directory for deploying the script
+pkgsrc_publish_base_dir: "/var/www/netbsd/pkgsrc/packages"  # Base target directory for published packages

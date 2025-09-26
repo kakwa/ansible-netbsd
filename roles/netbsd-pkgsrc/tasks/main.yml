@@ -24,3 +24,13 @@
 #  args:
 #    creates: "/usr/pkg/pkgdb/"
 #  become: true
+
+- name: Deploy publish-pkgs script
+  template:
+    src: publish-pkgs.j2
+    dest: "{{ pkgsrc_bin_path }}/publish-pkgs"
+    mode: '0755'
+    owner: root
+    group: wheel
+  become: true
+  when: pkgsrc_deploy_publish_script
