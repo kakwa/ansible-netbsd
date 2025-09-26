@@ -32,9 +32,32 @@
     pkgin_official_repo_urls: []
   when: not pkgin_use_official_repos or pkgin_only_custom_repos
 
-- name: Combine official and custom repository URLs
+- name: Validate custom repository URLs
+  uri:
+    url: "{{ item }}/pkg_summary.gz"
+    method: HEAD
+    status_code: [200, 404]
+  register: custom_repo_validation
+  loop: "{{ pkgin_custom_repo_urls }}"
+  when: pkgin_custom_repo_urls | length > 0
+  failed_when: false
+
+- name: Filter valid custom repository URLs
   set_fact:
-    pkgin_repo_urls: "{{ pkgin_official_repo_urls + pkgin_custom_repo_urls }}"
+    pkgin_valid_custom_repo_urls: >-
+      {{ pkgin_custom_repo_urls | zip(custom_repo_validation.results | default([])) | 
+         selectattr('1.status', 'equalto', 200) | 
+         map(attribute='0') | list }}
+  when: pkgin_custom_repo_urls | length > 0
+
+- name: Set empty valid custom repos if none provided
+  set_fact:
+    pkgin_valid_custom_repo_urls: []
+  when: pkgin_custom_repo_urls | length == 0
+
+- name: Combine official and validated custom repository URLs
+  set_fact:
+    pkgin_repo_urls: "{{ pkgin_official_repo_urls + pkgin_valid_custom_repo_urls }}"
 
 - name: Ensure pkgin repositories.conf is configured
   template:
