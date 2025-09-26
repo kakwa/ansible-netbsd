@@ -17,13 +17,13 @@ http {
     # This enables nginx to resolve hostnames at runtime instead of startup
     resolver {{ nginx_dns_resolvers | join(' ') }} valid={{ nginx_dns_valid_time }}{% if not nginx_dns_ipv6 %} ipv6=off{% endif %};
     resolver_timeout {{ nginx_dns_timeout }};
+    {% endif %}
 
-    # WebSocket connection upgrade map (for upstream blocks with resolve)
+    # WebSocket connection upgrade map
     map $http_upgrade $connection_upgrade {
         default upgrade;
         '' close;
     }
-    {% endif %}
 
     # Logging
     log_format main '$remote_addr - $remote_user [$time_local] "$request" '

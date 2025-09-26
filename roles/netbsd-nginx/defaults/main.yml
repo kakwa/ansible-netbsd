@@ -11,7 +11,8 @@ python_package_prefix: "py{{ python_version_short }}"
 
 # Nginx packages
 nginx_packages:
-  - nginx
+  - zlib
+  - pcre2
   - "{{ python_package_prefix }}-certbot-nginx"
   - "{{ python_package_prefix }}-passlib"
 

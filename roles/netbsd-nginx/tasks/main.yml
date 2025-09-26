@@ -5,6 +5,13 @@
     state: present
 
 
+- name: Build and install nginx from pkgsrc
+  command: make install
+  args:
+    chdir: /usr/pkgsrc/www/nginx
+    creates: /usr/pkg/sbin/nginx
+  become: true
+
 - name: Install nginx init script
   ansible.builtin.copy:
     src: /usr/pkg/share/examples/rc.d/nginx
@@ -118,11 +125,11 @@
 - name: Include SSL certificate tasks
   include_tasks: setup_ssl.yml
 
-- name: Include static website setup tasks
-  include_tasks: setup_static.yml
-
 - name: Include reverse proxy setup tasks
   include_tasks: setup_reverse_proxies.yml
+
+- name: Include static website setup tasks
+  include_tasks: setup_static.yml
 
 - name: Validate nginx configuration
   ansible.builtin.command: nginx -t
