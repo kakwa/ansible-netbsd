@@ -1,23 +1,4 @@
 ---
-- name: Enable mdnsd in rc.conf
-  ansible.builtin.lineinfile:
-    path: /etc/rc.conf
-    line: 'mdnsd=YES'
-    regexp: '^mdnsd='
-    state: present
-    backup: yes
-  notify: restart mdnsd
-  become: true
-
-- name: Add mdnsd to hosts database in nsswitch.conf
-  ansible.builtin.replace:
-    path: /etc/nsswitch.conf
-    regexp: '^(hosts.*files\s+dns)(\s*)$'
-    replace: '\1 mdnsd\2'
-    backup: yes
-  notify: restart mdnsd
-  become: true
-
 - name: Start and enable mdnsd service
   ansible.builtin.service:
     name: mdnsd
@@ -31,7 +12,6 @@
     state: present
   when: mdns_enable_unbound_forwarder or mdns_proxy_enable
 
-
 - name: Configure unbound for mDNS forwarding
   template:
     src: unbound.conf.j2
@@ -39,16 +19,6 @@
     owner: root
     group: wheel
     mode: '0644'
-  notify: restart unbound
-  when: mdns_enable_unbound_forwarder
-
-- name: Enable unbound in rc.conf
-  ansible.builtin.lineinfile:
-    path: /etc/rc.conf
-    line: 'unbound=YES'
-    regexp: '^unbound='
-    state: present
-    backup: yes
   notify: restart unbound
   when: mdns_enable_unbound_forwarder
 
