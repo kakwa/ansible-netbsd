@@ -9,7 +9,7 @@ server {
     listen 443 ssl default_server;
     listen [::]:443 default_server;
     http2 on;
-    
+
     # SSL configuration for default vhost
     {% if primary_letsencrypt_domain | default('') != '' %}
     # Use first available Let's Encrypt certificate
@@ -21,53 +21,53 @@ server {
     ssl_certificate_key {{ default_vhost_ssl_key | default('/usr/pkg/etc/nginx/ssl/selfsigned.key') }};
     {% endif %}
     {% endif %}
-    
+
     server_name {{ default_vhost_server_name | default('_') }};
-    
+
     # Document root for default site
     root {{ default_vhost_root | default('/usr/pkg/share/nginx/html') }};
     index {{ default_vhost_index | default('index.html index.htm') }};
-    
+
     # Security headers
     add_header X-Frame-Options "SAMEORIGIN" always;
     add_header X-Content-Type-Options "nosniff" always;
     add_header X-XSS-Protection "1; mode=block" always;
     add_header Referrer-Policy "no-referrer-when-downgrade" always;
     add_header Content-Security-Policy "default-src 'self' 'unsafe-inline'; img-src 'self' data: https:;" always;
-    
+
     # Gzip compression
     gzip_vary on;
     gzip_min_length 1024;
-    
+
     # Main location block
     location / {
         try_files $uri $uri/ =404;
     }
-    
+
     # Custom error pages
     error_page 404 /errors/404.html;
     error_page 500 502 503 504 /errors/50x.html;
-    
+
     # Error page locations
     location ^~ /errors/ {
         internal;
         root {{ default_vhost_error_pages_root | default('/usr/pkg/share/nginx') }};
     }
-    
+
     # Deny access to hidden files
     location ~ /\. {
         deny all;
         access_log off;
         log_not_found off;
     }
-    
+
     # Deny access to backup files
     location ~ ~$ {
         deny all;
         access_log off;
         log_not_found off;
     }
-    
+
     # Favicon handling
     location = /favicon.ico {
         log_not_found off;
@@ -75,20 +75,20 @@ server {
         expires 1y;
         add_header Cache-Control "public, immutable";
     }
-    
+
     # Robots.txt handling
     location = /robots.txt {
         log_not_found off;
         access_log off;
     }
-    
+
     # Cache static assets
     location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
         expires 1y;
         add_header Cache-Control "public, immutable";
         log_not_found off;
     }
-    
+
     # Log configuration
     access_log {{ default_vhost_access_log | default('/var/log/nginx/default_access.log') }} main;
     error_log {{ default_vhost_error_log | default('/var/log/nginx/default_error.log') }} warn;
@@ -100,7 +100,7 @@ server {
     listen 80;
     listen [::]:80;
     server_name {{ default_vhost_server_name | default('_') }};
-    
+
     return 301 https://$server_name$request_uri;
 }
 {% endif %}

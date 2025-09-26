@@ -1,3 +1,45 @@
+{% if nginx_dns_resolvers is defined and nginx_dns_resolvers | length > 0 %}
+# Extract hostname and port from upstream URL
+{% set upstream_url = item.upstream %}
+{% if upstream_url.startswith('http://') %}
+    {% set upstream_proto = 'http' %}
+    {% set upstream_host_port = upstream_url[7:] %}
+{% elif upstream_url.startswith('https://') %}
+    {% set upstream_proto = 'https' %}
+    {% set upstream_host_port = upstream_url[8:] %}
+{% else %}
+    {% set upstream_proto = 'http' %}
+    {% set upstream_host_port = upstream_url %}
+{% endif %}
+
+{% if '/' in upstream_host_port %}
+    {% set upstream_host_port = upstream_host_port.split('/')[0] %}
+{% endif %}
+
+{% if ':' in upstream_host_port %}
+    {% set upstream_host = upstream_host_port.split(':')[0] %}
+    {% set upstream_port = upstream_host_port.split(':')[1] %}
+{% else %}
+    {% set upstream_host = upstream_host_port %}
+    {% if upstream_proto == 'https' %}
+        {% set upstream_port = '443' %}
+    {% else %}
+        {% set upstream_port = '80' %}
+    {% endif %}
+{% endif %}
+
+# Upstream block with DNS resolution
+upstream {{ item.name }}_upstream {
+    server {{ upstream_host }}:{{ upstream_port }} resolve;
+
+    # Keep connections alive
+    keepalive 32;
+
+    # DNS resolution will happen for each request when resolve is used
+    # The resolver configuration from nginx.conf will be used
+}
+{% endif %}
+
 server {
     listen 80;
     listen [::]:80;
@@ -43,30 +85,37 @@ server {
 
     # Proxy settings
     location / {
-        proxy_pass {{ item.upstream }};
-        proxy_set_header Host $host;
+        {% if nginx_dns_resolvers is defined and nginx_dns_resolvers | length > 0 %}
+        # Extract path from upstream URL for proxy_pass when using upstream blocks
+        {% set upstream_path = '' %}
+        {% if '/' in item.upstream.split('://', 1)[1] %}
+            {% set upstream_path = '/' + item.upstream.split('://', 1)[1].split('/', 1)[1] %}
+        {% endif %}
+
+        proxy_pass {{ upstream_proto }}://{{ item.name }}_upstream{{ upstream_path }};
+        proxy_set_header Host {{ upstream_host }};
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
         proxy_set_header X-Forwarded-Host $host;
         proxy_set_header X-Forwarded-Port $server_port;
-        
+
         # SSL verification settings for HTTPS backends
-        {% if item.upstream.startswith('https://') and not (item.ssl_verify | default(reverse_proxy_defaults.ssl_verify | default(true))) %}
+        {% if upstream_proto == 'https' and not (item.ssl_verify | default(reverse_proxy_defaults.ssl_verify | default(true))) %}
         proxy_ssl_verify off;
         proxy_ssl_server_name off;
         {% endif %}
-        
-        # WebSocket support
+
+        # HTTP/1.1 for WebSocket support and keep-alive connections
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection "upgrade";
-        
+        proxy_set_header Connection $connection_upgrade;
+
         # Timeouts
         proxy_connect_timeout 60s;
         proxy_send_timeout 60s;
         proxy_read_timeout 60s;
-        
+
         # Handle DNS resolution failures gracefully
         proxy_next_upstream error timeout invalid_header http_500 http_502 http_503 http_504;
 
@@ -75,6 +124,41 @@ server {
         proxy_buffer_size 4k;
         proxy_buffers 8 4k;
         proxy_busy_buffers_size 8k;
+        {% else %}
+        # Fallback to direct proxy_pass when DNS resolvers are not configured
+        proxy_pass {{ item.upstream }};
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Host $host;
+        proxy_set_header X-Forwarded-Port $server_port;
+
+        # SSL verification settings for HTTPS backends
+        {% if item.upstream.startswith('https://') and not (item.ssl_verify | default(reverse_proxy_defaults.ssl_verify | default(true))) %}
+        proxy_ssl_verify off;
+        proxy_ssl_server_name off;
+        {% endif %}
+
+        # WebSocket support
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+
+        # Timeouts
+        proxy_connect_timeout 60s;
+        proxy_send_timeout 60s;
+        proxy_read_timeout 60s;
+
+        # Handle DNS resolution failures gracefully
+        proxy_next_upstream error timeout invalid_header http_500 http_502 http_503 http_504;
+
+        # Buffer settings
+        proxy_buffering on;
+        proxy_buffer_size 4k;
+        proxy_buffers 8 4k;
+        proxy_busy_buffers_size 8k;
+        {% endif %}
     }
 
     # Health check endpoint (optional)
