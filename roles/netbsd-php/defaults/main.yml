@@ -26,7 +26,6 @@ php_packages:
   - cwrappers
   - pcre2
   - readline
-  - git
 
 # PHP-FPM configuration
 php_fpm_pool: "fpm"
