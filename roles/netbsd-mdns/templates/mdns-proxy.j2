@@ -22,8 +22,8 @@ status_cmd="mdns_proxy_status"
 
 # Default configuration
 mdns_proxy_enable=${mdns_proxy_enable-"NO"}
-mdns_proxy_user="{{ mdns_proxy_user }}"
-mdns_proxy_group="{{ mdns_proxy_group }}"
+mdns_proxy_user="root"
+mdns_proxy_group="wheel"
 mdns_proxy_listen_addr="{{ mdns_proxy_listen_addr }}"
 mdns_proxy_listen_port="{{ mdns_proxy_listen_port }}"
 mdns_proxy_pidfile="{{ mdns_proxy_pid_file }}"

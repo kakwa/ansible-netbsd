@@ -6,7 +6,8 @@ import signal
 import argparse
 import syslog
 import time
-from dnslib import DNSRecord, QTYPE
+import dns.message
+import dns.rdatatype
 
 # Multicast address/port for mDNS
 MDNS_ADDR = "224.0.0.251"
@@ -92,7 +93,7 @@ def daemonize():
 def run_proxy():
     """Main proxy loop"""
     global shutdown_flag
-    
+
     # Socket for unicast DNS requests (from Unbound)
     dns_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     dns_sock.bind((DNS_LISTEN_ADDR, DNS_LISTEN_PORT))
@@ -108,10 +109,14 @@ def run_proxy():
     while not shutdown_flag:
         try:
             data, addr = dns_sock.recvfrom(4096)
-            query = DNSRecord.parse(data)
+            query = dns.message.from_wire(data)
 
-            qname = str(query.q.qname)
-            qtype = QTYPE[query.q.qtype]
+            # Get the first question
+            if len(query.question) == 0:
+                continue
+
+            qname = str(query.question[0].name)
+            qtype = dns.rdatatype.to_text(query.question[0].rdtype)
             log_message(f"Query for {qname} ({qtype}) from {addr}")
 
             # Forward only .local. domains to mDNS
@@ -120,18 +125,18 @@ def run_proxy():
                 continue
 
             # Forward query to mDNS multicast group
-            mdns_sock.sendto(query.pack(), (MDNS_ADDR, MDNS_PORT))
+            mdns_sock.sendto(data, (MDNS_ADDR, MDNS_PORT))
 
             # Wait for a response
             mdns_sock.settimeout(2)
             try:
                 rdata, _ = mdns_sock.recvfrom(4096)
-                response = DNSRecord.parse(rdata)
+                response = dns.message.from_wire(rdata)
 
                 # Fix response ID to match the client query
-                response.header.id = query.header.id
+                response.id = query.id
 
-                dns_sock.sendto(response.pack(), addr)
+                dns_sock.sendto(response.to_wire(), addr)
                 log_message(f"Sent response for {qname} to {addr}")
             except socket.timeout:
                 log_message("No mDNS reply received")
@@ -148,8 +153,10 @@ def run_proxy():
     log_message("DNS-mDNS bridge stopped")
 
 def main():
+    global DNS_LISTEN_ADDR, DNS_LISTEN_PORT
+
     parser = argparse.ArgumentParser(description='DNS-mDNS bridge daemon')
-    parser.add_argument('-d', '--daemon', action='store_true', 
+    parser.add_argument('-d', '--daemon', action='store_true',
                        help='Run as daemon')
     parser.add_argument('-p', '--pid-file', default=DEFAULT_PID_FILE,
                        help=f'PID file location (default: {DEFAULT_PID_FILE})')
@@ -157,21 +164,20 @@ def main():
                        help=f'Listen address (default: {DNS_LISTEN_ADDR})')
     parser.add_argument('--listen-port', type=int, default=DNS_LISTEN_PORT,
                        help=f'Listen port (default: {DNS_LISTEN_PORT})')
-    
+
     args = parser.parse_args()
-    
+
     # Update global variables with command line args
-    global DNS_LISTEN_ADDR, DNS_LISTEN_PORT
     DNS_LISTEN_ADDR = args.listen_addr
     DNS_LISTEN_PORT = args.listen_port
-    
+
     if args.daemon:
         # Initialize syslog for daemon mode
         syslog.openlog("mdns-proxy", syslog.LOG_PID, syslog.LOG_DAEMON)
         log_message.use_syslog = True
-        
+
         log_message("Starting mdns-proxy daemon")
-        
+
         # Check if already running
         if os.path.exists(args.pid_file):
             try:
@@ -191,18 +197,18 @@ def main():
                     os.unlink(args.pid_file)
                 except:
                     pass
-        
+
         # Daemonize
         daemonize()
-        
+
         # Create PID file after daemonizing
         create_pid_file(args.pid_file)
-        
+
         # Set up signal handlers
         signal.signal(signal.SIGTERM, signal_handler)
         signal.signal(signal.SIGINT, signal_handler)
         signal.signal(signal.SIGHUP, signal_handler)
-        
+
         try:
             run_proxy()
         finally:
@@ -211,11 +217,11 @@ def main():
     else:
         # Foreground mode
         log_message.use_syslog = False
-        
+
         # Set up signal handlers
         signal.signal(signal.SIGTERM, signal_handler)
         signal.signal(signal.SIGINT, signal_handler)
-        
+
         try:
             run_proxy()
         except KeyboardInterrupt:

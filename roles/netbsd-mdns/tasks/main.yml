@@ -70,18 +70,6 @@
   notify: restart mdns-proxy
   become: true
 
-- name: Create mDNS proxy user
-  ansible.builtin.user:
-    name: "{{ mdns_proxy_user }}"
-    group: "{{ mdns_proxy_group }}"
-    system: true
-    shell: /sbin/nologin
-    home: /nonexistent
-    create_home: false
-    comment: "mDNS proxy daemon user"
-  when: mdns_proxy_enable
-  become: true
-
 - name: Deploy mDNS proxy rc.d script
   ansible.builtin.template:
     src: mdns-proxy.j2
