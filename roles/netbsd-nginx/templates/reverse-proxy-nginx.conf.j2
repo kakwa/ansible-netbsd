@@ -30,6 +30,7 @@
 
 # Upstream block for connection pooling
 upstream {{ item.name }}_upstream {
+    zone {{ item.name }} 256k;
     server {{ upstream_host }}:{{ upstream_port }} resolve;
 
     # Keep connections alive
