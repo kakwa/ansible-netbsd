@@ -1,0 +1,30 @@
+---
+# Service management and validation
+
+- name: Validate nginx configuration
+  ansible.builtin.command: nginx -t
+  register: nginx_configtest
+  changed_when: false
+  failed_when: nginx_configtest.rc != 0
+  tags:
+    - nginx-base
+
+- name: Start & Enable nginx service
+  ansible.builtin.service:
+    name: nginx
+    state: started
+    enabled: true
+  become: true
+  tags:
+    - nginx-base
+
+- name: Add cron job for nginx status monitoring and auto-restart
+  ansible.builtin.cron:
+    name: "nginx status check and restart"
+    minute: "*/15"
+    job: "/etc/rc.d/nginx status || /etc/rc.d/nginx restart"
+    user: root
+    state: present
+  when: nginx_cron_monitoring_enabled | default(true)
+  tags:
+    - nginx-base

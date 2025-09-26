@@ -1,154 +1,47 @@
 ---
-- name: Install nginx and certbot packages
-  community.general.pkgin:
-    name: "{{ nginx_packages }}"
-    state: present
+# =============================================================================
+# BASE NGINX SETUP
+# =============================================================================
 
+- name: Include base nginx setup tasks
+  include_tasks: setup_base.yml
+  tags:
+    - nginx-base
 
-- name: Build and install nginx from pkgsrc
-  command: make install
-  args:
-    chdir: /usr/pkgsrc/www/nginx
-    creates: /usr/pkg/sbin/nginx
-  become: true
+# =============================================================================
+# VIRTUAL HOST SETUP
+# =============================================================================
 
-- name: Install nginx init script
-  ansible.builtin.copy:
-    src: /usr/pkg/share/examples/rc.d/nginx
-    dest: /etc/rc.d/nginx
-    owner: root
-    group: wheel
-    mode: '0755'
-    remote_src: true
-    force: false
-
-- name: Configure main nginx configuration
-  template:
-    src: nginx.conf.j2
-    dest: /usr/pkg/etc/nginx/nginx.conf
-    owner: root
-    group: wheel
-    mode: '0644'
-  notify: restart nginx
-
-- name: Create nginx sites-available directory
-  file:
-    path: /usr/pkg/etc/nginx/sites-available
-    state: directory
-    owner: root
-    group: wheel
-    mode: '0755'
-
-- name: Create nginx sites-enabled directory
-  file:
-    path: /usr/pkg/etc/nginx/sites-enabled
-    state: directory
-    owner: root
-    group: wheel
-    mode: '0755'
-
-- name: Create error pages directory
-  file:
-    path: "{{ default_vhost_error_pages_root }}/errors"
-    state: directory
-    owner: root
-    group: wheel
-    mode: '0755'
-  when: default_vhost_enabled | default(true)
-
-- name: Create default page directory
-  file:
-    path: "{{ default_vhost_root }}/"
-    state: directory
-    owner: root
-    group: wheel
-    mode: '0755'
-  when: default_vhost_enabled | default(true)
-
-- name: Generate custom error pages from templates
-  template:
-    src: "error-pages/{{ item }}.j2"
-    dest: "{{ default_vhost_error_pages_root }}/errors/{{ item }}"
-    owner: root
-    group: wheel
-    mode: '0644'
-  loop:
-    - "404.html"
-    - "500.html"
-    - "502.html"
-    - "503.html"
-    - "504.html"
-  when: default_vhost_enabled | default(true)
-
-- name: Create symlink for 50x errors
-  file:
-    src: "{{ default_vhost_error_pages_root }}/errors/500.html"
-    dest: "{{ default_vhost_error_pages_root }}/errors/50x.html"
-    state: link
-    owner: root
-    group: wheel
-  when: default_vhost_enabled | default(true)
-
-- name: Generate default index page from template
-  template:
-    src: "default-index.html.j2"
-    dest: "{{ default_vhost_root }}/index.html"
-    owner: root
-    group: wheel
-    mode: '0644'
-    force: false  # Don't overwrite if it already exists
-  when: default_vhost_enabled | default(true)
-
-- name: Configure default virtual host
-  template:
-    src: default-vhost.conf.j2
-    dest: /usr/pkg/etc/nginx/sites-available/000-default
-    owner: root
-    group: wheel
-    mode: '0644'
-  notify: restart nginx
-  when: default_vhost_enabled | default(true)
-
-- name: Enable default virtual host
-  file:
-    src: /usr/pkg/etc/nginx/sites-available/000-default
-    dest: /usr/pkg/etc/nginx/sites-enabled/000-default
-    state: link
-    owner: root
-    group: wheel
-  notify: restart nginx
-  when: default_vhost_enabled | default(true)
+- name: Include default virtual host setup tasks
+  include_tasks: setup_default_vhost.yml
+  tags:
+    - nginx-vhost
 
 - name: Include SSL certificate detection tasks
   include_tasks: detect_ssl_certificates.yml
+  tags:
+    - nginx-vhost
 
 - name: Include SSL certificate tasks
   include_tasks: setup_ssl.yml
+  tags:
+    - nginx-vhost
 
 - name: Include reverse proxy setup tasks
   include_tasks: setup_reverse_proxies.yml
+  tags:
+    - nginx-vhost
 
 - name: Include static website setup tasks
   include_tasks: setup_static.yml
+  tags:
+    - nginx-vhost
 
-- name: Validate nginx configuration
-  ansible.builtin.command: nginx -t
-  register: nginx_configtest
-  changed_when: false
-  failed_when: nginx_configtest.rc != 0
+# =============================================================================
+# SERVICE MANAGEMENT & VALIDATION
+# =============================================================================
 
-- name: Start & Enable nginx service
-  ansible.builtin.service:
-    name: nginx
-    state: started
-    enabled: true
-  become: true
-
-- name: Add cron job for nginx status monitoring and auto-restart
-  ansible.builtin.cron:
-    name: "nginx status check and restart"
-    minute: "*/15"
-    job: "/etc/rc.d/nginx status || /etc/rc.d/nginx restart"
-    user: root
-    state: present
-  when: nginx_cron_monitoring_enabled | default(true)
+- name: Include service management tasks
+  include_tasks: setup_service.yml
+  tags:
+    - nginx-base
