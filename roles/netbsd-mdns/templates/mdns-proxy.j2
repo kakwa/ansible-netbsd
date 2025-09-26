@@ -1,0 +1,100 @@
+#!/bin/sh
+#
+# {{ ansible_managed }}
+# PROVIDE: mdns_proxy
+# REQUIRE: mdnsd unbound
+# KEYWORD: shutdown
+#
+# Add the following to /etc/rc.conf to enable mdns_proxy:
+#
+# mdns_proxy_enable="YES"
+#
+
+. /etc/rc.subr
+
+name="mdns_proxy"
+rcvar="${name}_enable"
+command="/usr/pkg/bin/mdns-proxy.py"
+pidfile="{{ mdns_proxy_pid_file }}"
+start_cmd="mdns_proxy_start"
+stop_cmd="mdns_proxy_stop"
+status_cmd="mdns_proxy_status"
+
+# Default configuration
+mdns_proxy_enable=${mdns_proxy_enable-"NO"}
+mdns_proxy_user="{{ mdns_proxy_user }}"
+mdns_proxy_group="{{ mdns_proxy_group }}"
+mdns_proxy_listen_addr="{{ mdns_proxy_listen_addr }}"
+mdns_proxy_listen_port="{{ mdns_proxy_listen_port }}"
+mdns_proxy_pidfile="{{ mdns_proxy_pid_file }}"
+
+mdns_proxy_start()
+{
+    echo "Starting ${name}."
+    
+    # Ensure the PID directory exists
+    piddir=$(dirname "${mdns_proxy_pidfile}")
+    if [ ! -d "${piddir}" ]; then
+        mkdir -p "${piddir}"
+        chown "${mdns_proxy_user}:${mdns_proxy_group}" "${piddir}"
+    fi
+    
+    # Start the daemon
+    su -m "${mdns_proxy_user}" -c "${command} --daemon \
+        --pid-file '${mdns_proxy_pidfile}' \
+        --listen-addr '${mdns_proxy_listen_addr}' \
+        --listen-port '${mdns_proxy_listen_port}'"
+    
+    # Verify it started
+    sleep 1
+    if [ -f "${mdns_proxy_pidfile}" ]; then
+        echo "${name} started successfully."
+    else
+        echo "Failed to start ${name}."
+        return 1
+    fi
+}
+
+mdns_proxy_stop()
+{
+    if [ -f "${mdns_proxy_pidfile}" ]; then
+        pid=$(cat "${mdns_proxy_pidfile}")
+        echo "Stopping ${name} (PID: ${pid})."
+        kill -TERM "${pid}"
+        
+        # Wait for process to stop
+        timeout=10
+        while [ ${timeout} -gt 0 ] && kill -0 "${pid}" 2>/dev/null; do
+            sleep 1
+            timeout=$((timeout - 1))
+        done
+        
+        if kill -0 "${pid}" 2>/dev/null; then
+            echo "Process ${pid} did not stop, forcing termination."
+            kill -KILL "${pid}"
+        fi
+        
+        echo "${name} stopped."
+    else
+        echo "${name} is not running."
+    fi
+}
+
+mdns_proxy_status()
+{
+    if [ -f "${mdns_proxy_pidfile}" ]; then
+        pid=$(cat "${mdns_proxy_pidfile}")
+        if kill -0 "${pid}" 2>/dev/null; then
+            echo "${name} is running (PID: ${pid})."
+        else
+            echo "${name} is not running (stale PID file)."
+            return 1
+        fi
+    else
+        echo "${name} is not running."
+        return 1
+    fi
+}
+
+load_rc_config $name
+run_rc_command "$1"

@@ -29,12 +29,13 @@ server:
     
     # Allow .local domains to be resolved without DNSSEC
     domain-insecure: "local"
-    
-    # Use system resolver for .local domains
-    # This allows unbound to use NSS which includes mdnsd
-    local-zone: "local." transparent
 
-# Forward all queries except .local to upstream DNS servers
+# Forward .local queries to mDNS proxy
+forward-zone:
+    name: "local."
+    forward-addr: {{ mdns_proxy_listen_addr | default('127.0.0.1') }}@{{ mdns_proxy_listen_port | default(5533) }}
+
+# Forward all other queries to upstream DNS servers
 forward-zone:
     name: "."
     {% for resolver in mdns_dns_forwarders | default(['8.8.8.8', '8.8.4.4', '1.1.1.1']) %}

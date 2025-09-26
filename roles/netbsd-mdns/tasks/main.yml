@@ -25,16 +25,17 @@
     enabled: true
   become: true
 
-- name: Install unbound for DNS forwarding
+- name: Install packages for mDNS support
   community.general.pkgin:
     name: "{{ mdns_packages }}"
     state: present
-  when: mdns_enable_unbound_forwarder
+  when: mdns_enable_unbound_forwarder or mdns_proxy_enable
+
 
 - name: Configure unbound for mDNS forwarding
   template:
     src: unbound.conf.j2
-    dest: /usr/pkg/etc/unbound/unbound.conf
+    dest: /etc/unbound/unbound.conf
     owner: root
     group: wheel
     mode: '0644'
@@ -57,3 +58,56 @@
     state: started
     enabled: true
   when: mdns_enable_unbound_forwarder
+
+- name: Deploy mDNS proxy script
+  ansible.builtin.copy:
+    src: mdns-proxy.py
+    dest: /usr/pkg/bin/mdns-proxy.py
+    owner: root
+    group: wheel
+    mode: '0755'
+  when: mdns_proxy_enable
+  notify: restart mdns-proxy
+  become: true
+
+- name: Create mDNS proxy user
+  ansible.builtin.user:
+    name: "{{ mdns_proxy_user }}"
+    group: "{{ mdns_proxy_group }}"
+    system: true
+    shell: /sbin/nologin
+    home: /nonexistent
+    create_home: false
+    comment: "mDNS proxy daemon user"
+  when: mdns_proxy_enable
+  become: true
+
+- name: Deploy mDNS proxy rc.d script
+  ansible.builtin.template:
+    src: mdns-proxy.j2
+    dest: /etc/rc.d/mdns_proxy
+    owner: root
+    group: wheel
+    mode: '0755'
+  when: mdns_proxy_enable
+  notify: restart mdns-proxy
+  become: true
+
+- name: Enable mDNS proxy in rc.conf
+  ansible.builtin.lineinfile:
+    path: /etc/rc.conf
+    line: 'mdns_proxy_enable=YES'
+    regexp: '^mdns_proxy_enable='
+    state: present
+    backup: yes
+  notify: restart mdns-proxy
+  when: mdns_proxy_enable
+  become: true
+
+- name: Start and enable mDNS proxy service
+  ansible.builtin.service:
+    name: mdns_proxy
+    state: started
+    enabled: true
+  when: mdns_proxy_enable
+  become: true

@@ -10,3 +10,9 @@
     name: unbound
     state: restarted
   become: true
+
+- name: restart mdns-proxy
+  ansible.builtin.service:
+    name: mdns_proxy
+    state: restarted
+  become: true

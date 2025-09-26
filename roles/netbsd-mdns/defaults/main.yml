@@ -7,6 +7,16 @@ mdns_dns_forwarders:
   - "1.1.1.1"
   - "1.0.0.1"
 
+# mDNS proxy configuration
+mdns_proxy_enable: true
+mdns_proxy_listen_addr: "127.0.0.1"
+mdns_proxy_listen_port: 5533
+mdns_proxy_pid_file: "/var/run/mdns-proxy.pid"
+mdns_proxy_user: "_mdnsd"
+mdns_proxy_group: "_mdnsd"
+
 # Packages for mDNS support
 mdns_packages:
   - unbound
+  - python312
+  - py312-dns
