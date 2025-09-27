@@ -6,5 +6,6 @@
       - rsync
       - wget
       - sysupgrade
+      - pkg_chk
       - git
     state: present
