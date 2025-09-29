@@ -7,7 +7,7 @@
     -p {{ freshrss_db_port }}
     -U {{ freshrss_db_user }}
     -d {{ freshrss_db_name }}
-    -tAc "SELECT count(*) FROM information_schema.tables WHERE table_name='user';"
+    -tAc "SELECT count(*) FROM information_schema.tables WHERE table_name like 'freshrss_%';"
   register: db_check
   changed_when: false
   environment:
