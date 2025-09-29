@@ -26,6 +26,9 @@ DEFAULT_PID_FILE = "/var/run/mdns-proxy.pid"
 # Global flag for graceful shutdown
 shutdown_flag = False
 
+# Cache for previous DNS resolutions
+resolution_cache = {}
+
 def log_message(message, level=syslog.LOG_INFO):
     """Log message to syslog or stdout depending on daemon mode"""
     if hasattr(log_message, 'use_syslog') and log_message.use_syslog:
@@ -58,26 +61,30 @@ def remove_pid_file(pid_file):
     except Exception as e:
         log_message(f"Failed to remove PID file {pid_file}: {e}", syslog.LOG_WARNING)
 
-def create_fallback_response(query, fallback_ip="127.0.0.1"):
-    """Create a fallback response with the specified IP address"""
+def create_cached_response(query):
+    """Create a response using cached resolution if available"""
     try:
-        # Create response message
-        response = dns.message.make_response(query)
-
         # Get the question
         question = query.question[0]
-        qname = question.name
+        qname = str(question.name)
         qtype = question.rdtype
 
-        # Only respond to A record queries with our fallback IP
-        if qtype == dns.rdatatype.A:
-            # Create an A record with the fallback IP
-            rrset = dns.rrset.from_text(qname, 300, dns.rdataclass.IN, dns.rdatatype.A, fallback_ip)
-            response.answer.append(rrset)
+        # Check if we have a cached resolution for this query
+        cache_key = f"{qname}:{qtype}"
+        if cache_key not in resolution_cache:
+            log_message(f"No cached resolution found for {qname}")
+            return None
+
+        # Create response message
+        response = dns.message.make_response(query)
+        
+        # Use the cached answer
+        cached_answer = resolution_cache[cache_key]
+        response.answer.append(cached_answer)
 
         return response
     except Exception as e:
-        log_message(f"Error creating fallback response: {e}", syslog.LOG_ERR)
+        log_message(f"Error creating cached response: {e}", syslog.LOG_ERR)
         return None
 
 def daemonize():
@@ -153,7 +160,7 @@ def run_proxy():
             mdns_sock.sendto(data, (MDNS_ADDR, MDNS_PORT))
 
             # Wait for a response
-            mdns_sock.settimeout(0.5)
+            mdns_sock.settimeout(1.0)
             try:
                 rdata, _ = mdns_sock.recvfrom(4096)
                 response = dns.message.from_wire(rdata)
@@ -161,22 +168,32 @@ def run_proxy():
                 # Fix response ID to match the client query
                 response.id = query.id
 
+                # Cache the successful resolution
+                if len(response.answer) > 0:
+                    cache_key = f"{qname}:{query.question[0].rdtype}"
+                    resolution_cache[cache_key] = response.answer[0]
+                    log_message(f"Cached resolution for {qname}")
+
                 dns_sock.sendto(response.to_wire(), addr)
                 log_message(f"Sent mDNS response for {qname} to {addr}")
             except socket.timeout:
-                log_message(f"No mDNS reply received for {qname}, sending fallback response")
-                # Send fallback response with 127.0.0.1
-                fallback_response = create_fallback_response(query)
-                if fallback_response:
-                    dns_sock.sendto(fallback_response.to_wire(), addr)
-                    log_message(f"Sent fallback response (127.0.0.1) for {qname} to {addr}")
+                log_message(f"No mDNS reply received for {qname}, checking cache")
+                # Try to send cached response
+                cached_response = create_cached_response(query)
+                if cached_response:
+                    dns_sock.sendto(cached_response.to_wire(), addr)
+                    log_message(f"Sent cached response for {qname} to {addr}")
+                else:
+                    log_message(f"No cached response available for {qname}")
             except Exception as mdns_error:
-                log_message(f"mDNS error for {qname}: {mdns_error}, sending fallback response")
-                # Send fallback response on any mDNS error
-                fallback_response = create_fallback_response(query)
-                if fallback_response:
-                    dns_sock.sendto(fallback_response.to_wire(), addr)
-                    log_message(f"Sent fallback response (127.0.0.1) for {qname} to {addr}")
+                log_message(f"mDNS error for {qname}: {mdns_error}, checking cache")
+                # Try to send cached response on any mDNS error
+                cached_response = create_cached_response(query)
+                if cached_response:
+                    dns_sock.sendto(cached_response.to_wire(), addr)
+                    log_message(f"Sent cached response for {qname} to {addr}")
+                else:
+                    log_message(f"No cached response available for {qname}")
 
         except socket.timeout:
             # This is expected - allows us to check shutdown_flag periodically
