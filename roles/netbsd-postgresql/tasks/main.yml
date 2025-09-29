@@ -70,8 +70,7 @@
 - name: Ensure public schema ownership
   postgresql_schema:
     login_user: pgsql
-    db: "{{ item.name }}"
-    name: public
+    name: "{{ item.name }}"
     owner: "{{ item.user }}"
   loop: "{{ postgresql_databases }}"
   when: postgresql_databases | length > 0
