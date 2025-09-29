@@ -1,5 +1,11 @@
 ---
 
+- name: Check if FreshRSS admin user config exists
+  stat:
+    path: "/var/www/freshrss-data/users/{{ freshrss_admin_user }}/config.php"
+  register: freshrss_admin_config
+  when: not (force_admin_refresh | default(false))
+
 - name: Create FreshRSS admin user
   freshrss_user:
     username: "{{ freshrss_admin_user }}"
@@ -10,4 +16,5 @@
     freshrss_path: "/usr/pkg/share/freshrss"
     become_user: "{{ php_fpm_user }}"
   become: true
+  when: (force_admin_refresh | default(false)) or not freshrss_admin_config.stat.exists
 

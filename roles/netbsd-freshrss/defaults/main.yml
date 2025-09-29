@@ -6,6 +6,7 @@ freshrss_domain: "rss.example.com"
 freshrss_admin_user: "admin"
 freshrss_admin_password: "{{ vault_freshrss_admin_password | default('admin123') }}"
 freshrss_admin_email: "admin@example.com"
+force_admin_refresh: false  # Set to true to force refresh of admin user even if config exists (useful for resetting password)
 
 # Database connection (for FreshRSS)
 freshrss_db_name: "freshrss"
