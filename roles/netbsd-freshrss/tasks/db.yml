@@ -1,0 +1,29 @@
+---
+
+- name: Check if FreshRSS database is initialized
+  command: >
+    psql
+    -h {{ freshrss_db_host }}
+    -p {{ freshrss_db_port }}
+    -U {{ freshrss_db_user }}
+    -d {{ freshrss_db_name }}
+    -tAc "SELECT count(*) FROM information_schema.tables WHERE table_name='user';"
+  register: db_check
+  changed_when: false
+  environment:
+    PGPASSWORD: "{{ freshrss_db_password }}"
+
+- name: Install FreshRSS database schema
+  command: >
+    {{ php_binary }} /usr/pkg/share/freshrss/cli/prepare.php
+    --db-type pgsql
+    --db-host {{ freshrss_db_host }}
+    --db-port {{ freshrss_db_port }}
+    --db-user {{ freshrss_db_user }}
+    --db-password {{ freshrss_db_password }}
+    --db-base {{ freshrss_db_name }}
+    --default-user {{ freshrss_admin_user }}
+  args:
+    chdir: /usr/pkg/share/freshrss
+  become: true
+  when: db_check.stdout == "0"

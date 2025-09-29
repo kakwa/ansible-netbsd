@@ -1,0 +1,29 @@
+---
+
+- name: Include SSL certificate detection tasks
+  include_tasks: "{{ playbook_dir }}/roles/netbsd-nginx/tasks/detect_ssl_certificates.yml"
+
+- name: Create FreshRSS htpasswd file for nginx authentication
+  htpasswd:
+    path: /usr/pkg/etc/nginx/.htpasswd_freshrss
+    name: "{{ freshrss_auth_user }}"
+    password: "{{ freshrss_auth_password }}"
+    owner: root
+    group: wheel
+    mode: '0644'
+
+- name: Create FreshRSS nginx configuration
+  template:
+    src: freshrss-nginx.conf.j2
+    dest: /usr/pkg/etc/nginx/sites-available/freshrss
+    owner: root
+    group: wheel
+    mode: '0644'
+  notify: restart nginx
+
+- name: Enable FreshRSS site
+  file:
+    src: /usr/pkg/etc/nginx/sites-available/freshrss
+    dest: /usr/pkg/etc/nginx/sites-enabled/freshrss
+    state: link
+  notify: restart nginx

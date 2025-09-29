@@ -1,0 +1,58 @@
+---
+
+- name: Create pkgsrc overlay directory
+  file:
+    path: /usr/pkgsrc/overlay
+    state: directory
+    mode: '0755'
+  become: true
+
+- name: Copy php-freshrss pkgsrc files to remote server
+  copy:
+    src: php-freshrss.pkgsrc/
+    dest: /usr/pkgsrc/overlay/php-freshrss/
+    owner: root
+    group: wheel
+    mode: '0644'
+    directory_mode: '0755'
+  become: true
+
+- name: Build and install FreshRSS from overlay pkgsrc
+  command: make install
+  args:
+    chdir: /usr/pkgsrc/overlay/php-freshrss
+    creates: /usr/pkg/share/freshrss
+  become: true
+
+- name: Create FreshRSS data directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ php_fpm_user }}"
+    group: "{{ php_fpm_group }}"
+    mode: '0755'
+  loop:
+    - /var/www/freshrss-data
+    - /var/www/freshrss-data/cache
+    - /var/www/freshrss-data/favicons
+    - /var/www/freshrss-data/users
+    - /var/www/freshrss-data/users/_
+    - /var/www/freshrss-data/users/_/queries
+    - /var/www/freshrss-data/PubSubHubbub
+    - /var/www/freshrss-data/extensions
+
+- name: Create FreshRSS log directory
+  file:
+    path: /var/log/freshrss
+    state: directory
+    owner: "{{ php_fpm_user }}"
+    group: "{{ php_fpm_group }}"
+    mode: '0755'
+
+- name: Create FreshRSS extensions directory
+  file:
+    path: /usr/pkg/share/freshrss/extensions
+    state: directory
+    owner: root
+    group: wheel
+    mode: '0755'
