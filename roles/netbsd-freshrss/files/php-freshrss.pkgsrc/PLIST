@@ -107,6 +107,7 @@ share/freshrss/app/Utils/httpUtil.php
 share/freshrss/app/Utils/passwordUtil.php
 share/freshrss/app/actualize_script.php
 share/freshrss/app/i18n/cs/admin.php
+share/freshrss/app/i18n/cs/api.php
 share/freshrss/app/i18n/cs/conf.php
 share/freshrss/app/i18n/cs/feedback.php
 share/freshrss/app/i18n/cs/gen.php
@@ -115,6 +116,7 @@ share/freshrss/app/i18n/cs/install.php
 share/freshrss/app/i18n/cs/sub.php
 share/freshrss/app/i18n/cs/user.php
 share/freshrss/app/i18n/de/admin.php
+share/freshrss/app/i18n/de/api.php
 share/freshrss/app/i18n/de/conf.php
 share/freshrss/app/i18n/de/feedback.php
 share/freshrss/app/i18n/de/gen.php
@@ -123,6 +125,7 @@ share/freshrss/app/i18n/de/install.php
 share/freshrss/app/i18n/de/sub.php
 share/freshrss/app/i18n/de/user.php
 share/freshrss/app/i18n/el/admin.php
+share/freshrss/app/i18n/el/api.php
 share/freshrss/app/i18n/el/conf.php
 share/freshrss/app/i18n/el/feedback.php
 share/freshrss/app/i18n/el/gen.php
@@ -131,6 +134,7 @@ share/freshrss/app/i18n/el/install.php
 share/freshrss/app/i18n/el/sub.php
 share/freshrss/app/i18n/el/user.php
 share/freshrss/app/i18n/en-us/admin.php
+share/freshrss/app/i18n/en-us/api.php
 share/freshrss/app/i18n/en-us/conf.php
 share/freshrss/app/i18n/en-us/feedback.php
 share/freshrss/app/i18n/en-us/gen.php
@@ -139,6 +143,7 @@ share/freshrss/app/i18n/en-us/install.php
 share/freshrss/app/i18n/en-us/sub.php
 share/freshrss/app/i18n/en-us/user.php
 share/freshrss/app/i18n/en/admin.php
+share/freshrss/app/i18n/en/api.php
 share/freshrss/app/i18n/en/conf.php
 share/freshrss/app/i18n/en/feedback.php
 share/freshrss/app/i18n/en/gen.php
@@ -147,6 +152,7 @@ share/freshrss/app/i18n/en/install.php
 share/freshrss/app/i18n/en/sub.php
 share/freshrss/app/i18n/en/user.php
 share/freshrss/app/i18n/es/admin.php
+share/freshrss/app/i18n/es/api.php
 share/freshrss/app/i18n/es/conf.php
 share/freshrss/app/i18n/es/feedback.php
 share/freshrss/app/i18n/es/gen.php
@@ -155,6 +161,7 @@ share/freshrss/app/i18n/es/install.php
 share/freshrss/app/i18n/es/sub.php
 share/freshrss/app/i18n/es/user.php
 share/freshrss/app/i18n/fa/admin.php
+share/freshrss/app/i18n/fa/api.php
 share/freshrss/app/i18n/fa/conf.php
 share/freshrss/app/i18n/fa/feedback.php
 share/freshrss/app/i18n/fa/gen.php
@@ -163,6 +170,7 @@ share/freshrss/app/i18n/fa/install.php
 share/freshrss/app/i18n/fa/sub.php
 share/freshrss/app/i18n/fa/user.php
 share/freshrss/app/i18n/fi/admin.php
+share/freshrss/app/i18n/fi/api.php
 share/freshrss/app/i18n/fi/conf.php
 share/freshrss/app/i18n/fi/feedback.php
 share/freshrss/app/i18n/fi/gen.php
@@ -171,6 +179,7 @@ share/freshrss/app/i18n/fi/install.php
 share/freshrss/app/i18n/fi/sub.php
 share/freshrss/app/i18n/fi/user.php
 share/freshrss/app/i18n/fr/admin.php
+share/freshrss/app/i18n/fr/api.php
 share/freshrss/app/i18n/fr/conf.php
 share/freshrss/app/i18n/fr/feedback.php
 share/freshrss/app/i18n/fr/gen.php
@@ -179,6 +188,7 @@ share/freshrss/app/i18n/fr/install.php
 share/freshrss/app/i18n/fr/sub.php
 share/freshrss/app/i18n/fr/user.php
 share/freshrss/app/i18n/he/admin.php
+share/freshrss/app/i18n/he/api.php
 share/freshrss/app/i18n/he/conf.php
 share/freshrss/app/i18n/he/feedback.php
 share/freshrss/app/i18n/he/gen.php
@@ -187,6 +197,7 @@ share/freshrss/app/i18n/he/install.php
 share/freshrss/app/i18n/he/sub.php
 share/freshrss/app/i18n/he/user.php
 share/freshrss/app/i18n/hu/admin.php
+share/freshrss/app/i18n/hu/api.php
 share/freshrss/app/i18n/hu/conf.php
 share/freshrss/app/i18n/hu/feedback.php
 share/freshrss/app/i18n/hu/gen.php
@@ -195,6 +206,7 @@ share/freshrss/app/i18n/hu/install.php
 share/freshrss/app/i18n/hu/sub.php
 share/freshrss/app/i18n/hu/user.php
 share/freshrss/app/i18n/id/admin.php
+share/freshrss/app/i18n/id/api.php
 share/freshrss/app/i18n/id/conf.php
 share/freshrss/app/i18n/id/feedback.php
 share/freshrss/app/i18n/id/gen.php
@@ -203,6 +215,7 @@ share/freshrss/app/i18n/id/install.php
 share/freshrss/app/i18n/id/sub.php
 share/freshrss/app/i18n/id/user.php
 share/freshrss/app/i18n/it/admin.php
+share/freshrss/app/i18n/it/api.php
 share/freshrss/app/i18n/it/conf.php
 share/freshrss/app/i18n/it/feedback.php
 share/freshrss/app/i18n/it/gen.php
@@ -211,6 +224,7 @@ share/freshrss/app/i18n/it/install.php
 share/freshrss/app/i18n/it/sub.php
 share/freshrss/app/i18n/it/user.php
 share/freshrss/app/i18n/ja/admin.php
+share/freshrss/app/i18n/ja/api.php
 share/freshrss/app/i18n/ja/conf.php
 share/freshrss/app/i18n/ja/feedback.php
 share/freshrss/app/i18n/ja/gen.php
@@ -219,6 +233,7 @@ share/freshrss/app/i18n/ja/install.php
 share/freshrss/app/i18n/ja/sub.php
 share/freshrss/app/i18n/ja/user.php
 share/freshrss/app/i18n/ko/admin.php
+share/freshrss/app/i18n/ko/api.php
 share/freshrss/app/i18n/ko/conf.php
 share/freshrss/app/i18n/ko/feedback.php
 share/freshrss/app/i18n/ko/gen.php
@@ -227,6 +242,7 @@ share/freshrss/app/i18n/ko/install.php
 share/freshrss/app/i18n/ko/sub.php
 share/freshrss/app/i18n/ko/user.php
 share/freshrss/app/i18n/lv/admin.php
+share/freshrss/app/i18n/lv/api.php
 share/freshrss/app/i18n/lv/conf.php
 share/freshrss/app/i18n/lv/feedback.php
 share/freshrss/app/i18n/lv/gen.php
@@ -235,6 +251,7 @@ share/freshrss/app/i18n/lv/install.php
 share/freshrss/app/i18n/lv/sub.php
 share/freshrss/app/i18n/lv/user.php
 share/freshrss/app/i18n/nl/admin.php
+share/freshrss/app/i18n/nl/api.php
 share/freshrss/app/i18n/nl/conf.php
 share/freshrss/app/i18n/nl/feedback.php
 share/freshrss/app/i18n/nl/gen.php
@@ -243,6 +260,7 @@ share/freshrss/app/i18n/nl/install.php
 share/freshrss/app/i18n/nl/sub.php
 share/freshrss/app/i18n/nl/user.php
 share/freshrss/app/i18n/oc/admin.php
+share/freshrss/app/i18n/oc/api.php
 share/freshrss/app/i18n/oc/conf.php
 share/freshrss/app/i18n/oc/feedback.php
 share/freshrss/app/i18n/oc/gen.php
@@ -251,6 +269,7 @@ share/freshrss/app/i18n/oc/install.php
 share/freshrss/app/i18n/oc/sub.php
 share/freshrss/app/i18n/oc/user.php
 share/freshrss/app/i18n/pl/admin.php
+share/freshrss/app/i18n/pl/api.php
 share/freshrss/app/i18n/pl/conf.php
 share/freshrss/app/i18n/pl/feedback.php
 share/freshrss/app/i18n/pl/gen.php
@@ -259,6 +278,7 @@ share/freshrss/app/i18n/pl/install.php
 share/freshrss/app/i18n/pl/sub.php
 share/freshrss/app/i18n/pl/user.php
 share/freshrss/app/i18n/pt-br/admin.php
+share/freshrss/app/i18n/pt-br/api.php
 share/freshrss/app/i18n/pt-br/conf.php
 share/freshrss/app/i18n/pt-br/feedback.php
 share/freshrss/app/i18n/pt-br/gen.php
@@ -267,6 +287,7 @@ share/freshrss/app/i18n/pt-br/install.php
 share/freshrss/app/i18n/pt-br/sub.php
 share/freshrss/app/i18n/pt-br/user.php
 share/freshrss/app/i18n/pt-pt/admin.php
+share/freshrss/app/i18n/pt-pt/api.php
 share/freshrss/app/i18n/pt-pt/conf.php
 share/freshrss/app/i18n/pt-pt/feedback.php
 share/freshrss/app/i18n/pt-pt/gen.php
@@ -275,6 +296,7 @@ share/freshrss/app/i18n/pt-pt/install.php
 share/freshrss/app/i18n/pt-pt/sub.php
 share/freshrss/app/i18n/pt-pt/user.php
 share/freshrss/app/i18n/ru/admin.php
+share/freshrss/app/i18n/ru/api.php
 share/freshrss/app/i18n/ru/conf.php
 share/freshrss/app/i18n/ru/feedback.php
 share/freshrss/app/i18n/ru/gen.php
@@ -283,6 +305,7 @@ share/freshrss/app/i18n/ru/install.php
 share/freshrss/app/i18n/ru/sub.php
 share/freshrss/app/i18n/ru/user.php
 share/freshrss/app/i18n/sk/admin.php
+share/freshrss/app/i18n/sk/api.php
 share/freshrss/app/i18n/sk/conf.php
 share/freshrss/app/i18n/sk/feedback.php
 share/freshrss/app/i18n/sk/gen.php
@@ -291,6 +314,7 @@ share/freshrss/app/i18n/sk/install.php
 share/freshrss/app/i18n/sk/sub.php
 share/freshrss/app/i18n/sk/user.php
 share/freshrss/app/i18n/tr/admin.php
+share/freshrss/app/i18n/tr/api.php
 share/freshrss/app/i18n/tr/conf.php
 share/freshrss/app/i18n/tr/feedback.php
 share/freshrss/app/i18n/tr/gen.php
@@ -298,7 +322,17 @@ share/freshrss/app/i18n/tr/index.php
 share/freshrss/app/i18n/tr/install.php
 share/freshrss/app/i18n/tr/sub.php
 share/freshrss/app/i18n/tr/user.php
+share/freshrss/app/i18n/uk/admin.php
+share/freshrss/app/i18n/uk/api.php
+share/freshrss/app/i18n/uk/conf.php
+share/freshrss/app/i18n/uk/feedback.php
+share/freshrss/app/i18n/uk/gen.php
+share/freshrss/app/i18n/uk/index.php
+share/freshrss/app/i18n/uk/install.php
+share/freshrss/app/i18n/uk/sub.php
+share/freshrss/app/i18n/uk/user.php
 share/freshrss/app/i18n/zh-cn/admin.php
+share/freshrss/app/i18n/zh-cn/api.php
 share/freshrss/app/i18n/zh-cn/conf.php
 share/freshrss/app/i18n/zh-cn/feedback.php
 share/freshrss/app/i18n/zh-cn/gen.php
@@ -307,6 +341,7 @@ share/freshrss/app/i18n/zh-cn/install.php
 share/freshrss/app/i18n/zh-cn/sub.php
 share/freshrss/app/i18n/zh-cn/user.php
 share/freshrss/app/i18n/zh-tw/admin.php
+share/freshrss/app/i18n/zh-tw/api.php
 share/freshrss/app/i18n/zh-tw/conf.php
 share/freshrss/app/i18n/zh-tw/feedback.php
 share/freshrss/app/i18n/zh-tw/gen.php
@@ -422,6 +457,7 @@ share/freshrss/cli/do-install.php
 share/freshrss/cli/export-opml-for-user.php
 share/freshrss/cli/export-sqlite-for-user.php
 share/freshrss/cli/export-zip-for-user.php
+share/freshrss/cli/health.php
 share/freshrss/cli/i18n/I18nCompletionValidator.php
 share/freshrss/cli/i18n/I18nData.php
 share/freshrss/cli/i18n/I18nFile.php
@@ -625,6 +661,7 @@ share/freshrss/docs/i18n/flags/gen/pt-pt.svg
 share/freshrss/docs/i18n/flags/gen/ru.svg
 share/freshrss/docs/i18n/flags/gen/sk.svg
 share/freshrss/docs/i18n/flags/gen/tr.svg
+share/freshrss/docs/i18n/flags/gen/uk.svg
 share/freshrss/docs/i18n/flags/gen/zh-cn.svg
 share/freshrss/docs/i18n/flags/gen/zh-tw.svg
 share/freshrss/docs/i18n/flags/oc.svg
