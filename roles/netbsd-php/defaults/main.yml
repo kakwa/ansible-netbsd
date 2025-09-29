@@ -36,3 +36,6 @@ php_fpm_pm_max_children: 50
 php_fpm_pm_start_servers: 5
 php_fpm_pm_min_spare_servers: 5
 php_fpm_pm_max_spare_servers: 35
+
+# PHP-FPM user home directory (optional - only creates user if set)
+# php_fpm_user_home: "/var/www/freshrss-data"

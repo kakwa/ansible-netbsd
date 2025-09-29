@@ -91,6 +91,8 @@
             password: "{{ vault_dbfreshrss_password | default(lookup('password', './freshrss_db.password.txt chars=ascii_letters,digits length=16')) }}"
     - role: netbsd-php
       tags: ["app", "netbsd-php"]
+      vars:
+        php_fpm_user_home: "/var/www/freshrss-data"
     - role: netbsd-freshrss
       tags: ["app", "netbsd-freshrss"]
       vars:

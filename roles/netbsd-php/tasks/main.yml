@@ -57,6 +57,17 @@
     creates: "{{ php_config_dir }}/curl.ini"
   become: true
 
+- name: Create PHP-FPM user
+  user:
+    name: "{{ php_fpm_user }}"
+    group: "{{ php_fpm_group }}"
+    home: "{{ php_fpm_user_home }}"
+    shell: /sbin/nologin
+    system: yes
+    create_home: yes
+  become: true
+  when: php_fpm_user_home is defined
+
 - name: Install {{ php_fpm_service }} init script
   ansible.builtin.copy:
     src: "/usr/pkg/share/examples/rc.d/{{ php_fpm_service }}"
