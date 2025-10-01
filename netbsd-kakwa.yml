@@ -47,11 +47,11 @@
         static_sites:
           - name: "lens"
             domain: "lens.kakwalab.ovh"
-            root: "/var/www/lens"
+            root: "/srv/www/lens"
             index: "index.html"
           - name: "sun"
             domain: "sun.kakwalab.ovh"
-            root: "/var/www/sun"
+            root: "/srv/www/sun"
             index: "index.html"
           - name: "netbsd"
             domain: "netbsd.kakwalab.ovh"
