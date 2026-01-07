@@ -43,6 +43,11 @@ server {
     listen [::]:80;
     server_name {{ item.domain }};
 
+    # Redundant but makes certbot less prone to modify the configuration
+    if ($host = {{ item.domain }}) {
+        return 301 https://$host$request_uri;
+    } # managed by Certbot
+
     # Redirect HTTP to HTTPS
     return 301 https://$server_name$request_uri;
 }
@@ -54,16 +59,16 @@ server {
     server_name {{ item.domain }};
 
     # SSL configuration - use Let's Encrypt if available, otherwise self-signed
-    {% if item.domain in letsencrypt_available_certs %}
+{% if item.domain in letsencrypt_available_certs %}
     ssl_certificate /usr/pkg/etc/letsencrypt/live/{{ item.domain }}/fullchain.pem;
     ssl_certificate_key /usr/pkg/etc/letsencrypt/live/{{ item.domain }}/privkey.pem;
-    {% elif primary_letsencrypt_domain %}
+{% elif primary_letsencrypt_domain %}
     ssl_certificate /usr/pkg/etc/letsencrypt/live/{{ primary_letsencrypt_domain }}/fullchain.pem;
     ssl_certificate_key /usr/pkg/etc/letsencrypt/live/{{ primary_letsencrypt_domain }}/privkey.pem;
-    {% else %}
+{% else %}
     ssl_certificate /usr/pkg/etc/nginx/ssl/selfsigned.crt;
     ssl_certificate_key /usr/pkg/etc/nginx/ssl/selfsigned.key;
-    {% endif %}
+{% endif %}
 
     # Security headers
     add_header X-Frame-Options "SAMEORIGIN" always;
@@ -76,19 +81,27 @@ server {
     error_log /var/log/nginx/{{ item.name }}_error.log;
 
     # Basic authentication
-    {% if item.auth_enabled | default(false) %}
+{% if item.auth_enabled | default(false) %}
     auth_basic "Restricted Access";
     auth_basic_user_file /usr/pkg/etc/nginx/.htpasswd.{{ item.name }};
-    {% endif %}
+{% endif %}
 
     # Proxy settings
     location / {
-        {% if nginx_dns_resolvers is defined and nginx_dns_resolvers | length > 0 %}
-        # Extract path from upstream URL for proxy_pass when using upstream blocks
-        {% set upstream_path = '' %}
-        {% if '/' in item.upstream.split('://', 1)[1] %}
-            {% set upstream_path = '/' + item.upstream.split('://', 1)[1].split('/', 1)[1] %}
-        {% endif %}
+{% if nginx_dns_resolvers is defined and nginx_dns_resolvers | length > 0 %}
+# Extract path from upstream URL for proxy_pass when using upstream blocks
+{% set upstream_path = '' %}
+{% if '/' in item.upstream.split('://', 1)[1] %}
+    {% set upstream_path = '/' + item.upstream.split('://', 1)[1].split('/', 1)[1] %}
+{% endif %}
+
+{% if item.auth_enabled | default(false) %}
+        # Prevent caching to ensure browser always prompts for Basic Auth credentials
+        # This ensures WebSocket connections have access to the auth credentials
+        add_header Cache-Control "no-cache, no-store, must-revalidate" always;
+        add_header Pragma "no-cache" always;
+        add_header Expires "0" always;
+{% endif %}
 
         proxy_pass {{ upstream_proto }}://{{ item.name }}_upstream{{ upstream_path }};
         proxy_set_header Host $host;
@@ -99,30 +112,39 @@ server {
         proxy_set_header X-Forwarded-Port $server_port;
 
         # SSL verification settings for HTTPS backends
-        {% if upstream_proto == 'https' and not (item.ssl_verify | default(reverse_proxy_defaults.ssl_verify | default(true))) %}
+{% if upstream_proto == 'https' and not (item.ssl_verify | default(reverse_proxy_defaults.ssl_verify | default(true))) %}
         proxy_ssl_verify off;
         proxy_ssl_server_name off;
-        {% endif %}
+{% endif %}
 
         # HTTP/1.1 for WebSocket support and keep-alive connections
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection $connection_upgrade;
 
-        # Timeouts
+        # Timeouts - extended for WebSocket connections if websocket_path is defined
         proxy_connect_timeout 60s;
+{% if item.websocket_path is defined %}
+        proxy_send_timeout 3600s;  # 1 hour for WebSocket
+        proxy_read_timeout 3600s;  # 1 hour for WebSocket
+{% else %}
         proxy_send_timeout 60s;
         proxy_read_timeout 60s;
+{% endif %}
 
         # Handle DNS resolution failures gracefully
         proxy_next_upstream error timeout invalid_header http_500 http_502 http_503 http_504;
 
         # Buffer settings
+{% if item.websocket_path is defined %}
+        proxy_buffering off;  # Disable buffering for WebSocket
+{% else %}
         proxy_buffering on;
         proxy_buffer_size 4k;
         proxy_buffers 8 4k;
         proxy_busy_buffers_size 8k;
-        {% else %}
+{% endif %}
+{% else %}
         # Fallback to direct proxy_pass when DNS resolvers are not configured
         proxy_pass {{ item.upstream }};
         proxy_set_header Host $host;
@@ -133,30 +155,39 @@ server {
         proxy_set_header X-Forwarded-Port $server_port;
 
         # SSL verification settings for HTTPS backends
-        {% if item.upstream.startswith('https://') and not (item.ssl_verify | default(reverse_proxy_defaults.ssl_verify | default(true))) %}
+{% if item.upstream.startswith('https://') and not (item.ssl_verify | default(reverse_proxy_defaults.ssl_verify | default(true))) %}
         proxy_ssl_verify off;
         proxy_ssl_server_name off;
-        {% endif %}
+{% endif %}
 
         # WebSocket support
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection $connection_upgrade;
 
-        # Timeouts
+        # Timeouts - extended for WebSocket connections if websocket_path is defined
         proxy_connect_timeout 60s;
+{% if item.websocket_path is defined %}
+        proxy_send_timeout 3600s;  # 1 hour for WebSocket
+        proxy_read_timeout 3600s;  # 1 hour for WebSocket
+{% else %}
         proxy_send_timeout 60s;
         proxy_read_timeout 60s;
+{% endif %}
 
         # Handle DNS resolution failures gracefully
         proxy_next_upstream error timeout invalid_header http_500 http_502 http_503 http_504;
 
         # Buffer settings
+{% if item.websocket_path is defined %}
+        proxy_buffering off;  # Disable buffering for WebSocket
+{% else %}
         proxy_buffering on;
         proxy_buffer_size 4k;
         proxy_buffers 8 4k;
         proxy_busy_buffers_size 8k;
-        {% endif %}
+{% endif %}
+{% endif %}
     }
 
     # Health check endpoint (optional)

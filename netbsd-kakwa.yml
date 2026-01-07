@@ -66,7 +66,7 @@
             auth_enabled: true
             auth_user: "kakwa"
             auth_password: "{{ vault_proxy_password | default(lookup('password', './proxy.password.txt chars=ascii_letters,digits length=16')) }}"
-            websocket_enabled: true
+            websocket_path: "/websocket"
           - name: "ender3"
             domain: "ender3.kakwalab.ovh"
             upstream: "https://ender3.local/"
@@ -74,7 +74,7 @@
             auth_enabled: true
             auth_user: "kakwa"
             auth_password: "{{ vault_proxy_password | default(lookup('password', './proxy.password.txt chars=ascii_letters,digits length=16')) }}"
-            websocket_enabled: true
+            websocket_path: "/websocket"
           - name: "rockrobo"
             domain: "rockrobo.kakwalab.ovh"
             upstream: "http://rockrobo.local/"
