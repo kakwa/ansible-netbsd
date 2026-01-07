@@ -90,11 +90,11 @@ server {
     location / {
 
 {% if nginx_dns_resolvers is defined and nginx_dns_resolvers | length > 0 %}
-    # Extract path from upstream URL for proxy_pass when using upstream blocks
+        # Extract path from upstream URL for proxy_pass when using upstream blocks
 {% set upstream_path = '' %}
 {% if '/' in item.upstream.split('://', 1)[1] %}
     {% set upstream_path = '/' + item.upstream.split('://', 1)[1].split('/', 1)[1] %}
-# Path extracted: {{ upstream_path }}
+    # Path extracted: {{ upstream_path }}
 {% endif %}
 
 {% if item.auth_enabled | default(false) %}
