@@ -1,0 +1,40 @@
+---
+# Logrotate package
+logrotate_package: "logrotate"
+
+# Global logrotate configuration
+logrotate_global_config:
+  - "weekly"
+  - "rotate 4"
+  - "create"
+  - "compress"
+  - "delaycompress"
+  - "notifempty"
+  - "missingok"
+
+# Logrotate configurations
+# Each entry should have:
+#   - name: unique identifier for the config file
+#   - paths: list of log file paths to rotate
+#   - options: list of logrotate options
+#   - postrotate: optional postrotate script
+#   - prerotate: optional prerotate script
+logrotate_configs: []
+
+# Example configuration:
+# logrotate_configs:
+#   - name: nginx
+#     paths:
+#       - /var/log/nginx/*.log
+#     options:
+#       - daily
+#       - rotate 14
+#       - compress
+#       - delaycompress
+#       - notifempty
+#       - missingok
+#       - sharedscripts
+#     postrotate: |
+#       if [ -f /var/run/nginx.pid ]; then
+#         kill -USR1 $(cat /var/run/nginx.pid)
+#       fi

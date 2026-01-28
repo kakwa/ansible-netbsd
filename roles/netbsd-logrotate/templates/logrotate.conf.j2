@@ -1,0 +1,10 @@
+# Global logrotate configuration for NetBSD
+# Managed by Ansible - Do not edit manually
+
+# Global options
+{% for option in logrotate_global_config %}
+{{ option }}
+{% endfor %}
+
+# Include all configurations from logrotate.d
+include /usr/pkg/etc/logrotate.d

@@ -1,0 +1,45 @@
+---
+# Setup logrotate for nginx logs
+
+- name: Ensure logrotate is installed
+  community.general.pkgin:
+    name: logrotate
+    state: present
+  become: true
+  tags:
+    - nginx-logrotate
+
+- name: Create logrotate configuration directory
+  ansible.builtin.file:
+    path: /usr/pkg/etc/logrotate.d
+    state: directory
+    owner: root
+    group: wheel
+    mode: '0755'
+  become: true
+  tags:
+    - nginx-logrotate
+
+- name: Configure logrotate for nginx
+  ansible.builtin.template:
+    src: nginx-logrotate.j2
+    dest: /usr/pkg/etc/logrotate.d/nginx
+    owner: root
+    group: wheel
+    mode: '0644'
+  become: true
+  when: nginx_logrotate_enabled | bool
+  tags:
+    - nginx-logrotate
+
+- name: Setup daily logrotate cron job
+  ansible.builtin.cron:
+    name: "logrotate daily"
+    minute: "0"
+    hour: "2"
+    job: "/usr/pkg/sbin/logrotate /usr/pkg/etc/logrotate.conf"
+    user: root
+    state: present
+  become: true
+  tags:
+    - nginx-logrotate

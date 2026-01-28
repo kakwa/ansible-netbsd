@@ -73,3 +73,10 @@ nginx_page_title: "Welcome to nginx on NetBSD"  # Title for default index page
 
 # Nginx monitoring configuration
 nginx_cron_monitoring_enabled: true  # Enable periodic nginx status check and restart
+
+# Logrotate configuration for nginx logs
+nginx_logrotate_enabled: true
+nginx_logrotate_frequency: "daily"
+nginx_logrotate_rotate_count: 14
+nginx_logrotate_compress: true
+nginx_logrotate_delaycompress: true

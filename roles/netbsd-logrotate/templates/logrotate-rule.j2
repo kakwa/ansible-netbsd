@@ -1,0 +1,19 @@
+# Logrotate configuration for {{ item.name }}
+# Managed by Ansible - Do not edit manually
+
+{% for path in item.paths %}
+{{ path }} {% endfor %}{
+{% for option in item.options %}
+    {{ option }}
+{% endfor %}
+{% if item.prerotate is defined %}
+    prerotate
+        {{ item.prerotate | indent(8) }}
+    endscript
+{% endif %}
+{% if item.postrotate is defined %}
+    postrotate
+        {{ item.postrotate | indent(8) }}
+    endscript
+{% endif %}
+}

@@ -1,0 +1,67 @@
+---
+# =============================================================================
+# LOGROTATE INSTALLATION
+# =============================================================================
+
+- name: Install logrotate package
+  community.general.pkgin:
+    name: "{{ logrotate_package }}"
+    state: present
+  become: true
+  tags:
+    - logrotate-base
+
+# =============================================================================
+# LOGROTATE CONFIGURATION
+# =============================================================================
+
+- name: Create logrotate configuration directory
+  ansible.builtin.file:
+    path: /usr/pkg/etc/logrotate.d
+    state: directory
+    owner: root
+    group: wheel
+    mode: '0755'
+  become: true
+  tags:
+    - logrotate-base
+
+- name: Configure global logrotate settings
+  ansible.builtin.template:
+    src: logrotate.conf.j2
+    dest: /usr/pkg/etc/logrotate.conf
+    owner: root
+    group: wheel
+    mode: '0644'
+  become: true
+  tags:
+    - logrotate-base
+
+- name: Configure individual logrotate rules
+  ansible.builtin.template:
+    src: logrotate-rule.j2
+    dest: "/usr/pkg/etc/logrotate.d/{{ item.name }}"
+    owner: root
+    group: wheel
+    mode: '0644'
+  become: true
+  loop: "{{ logrotate_configs }}"
+  when: logrotate_configs | length > 0
+  tags:
+    - logrotate-config
+
+# =============================================================================
+# LOGROTATE CRON JOB
+# =============================================================================
+
+- name: Setup daily logrotate cron job
+  ansible.builtin.cron:
+    name: "logrotate daily"
+    minute: "0"
+    hour: "2"
+    job: "/usr/pkg/sbin/logrotate /usr/pkg/etc/logrotate.conf"
+    user: root
+    state: present
+  become: true
+  tags:
+    - logrotate-base
