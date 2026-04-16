@@ -5,27 +5,25 @@ php_version_minor: "3"
 php_version_full: "{{ php_version_major }}.{{ php_version_minor }}"
 php_version_short: "{{ php_version_major }}{{ php_version_minor }}"
 
+# pkgsrc tree (same layout as netbsd-pkgsrc / netbsd-nginx)
+pkgsrc_tree: /usr/pkgsrc
+
 # Derived PHP paths and names
 php_binary: "/usr/pkg/bin/php{{ php_version_short }}"
 php_fpm_binary: "/usr/pkg/sbin/php-fpm{{ php_version_short }}"
 php_fpm_service: "php_fpm{{ php_version_short }}"
-php_pkgsrc_dir: "/usr/pkgsrc/lang/php{{ php_version_short }}"
+php_pkgsrc_dir: "{{ pkgsrc_tree }}/lang/php{{ php_version_short }}"
 php_config_dir: "/usr/pkg/share/examples/php/{{ php_version_full }}"
 php_etc_dir: "/usr/pkg/etc/php/{{ php_version_full }}"
 
-# PHP and PHP-FPM packages
-php_packages:
-  - libxml2
-  - perl
-  - gmake
-  - m4
-  - libtool-base
-  - autoconf
-  - mktools
-  - pkgconf
-  - cwrappers
-  - pcre2
-  - readline
+# For www/php-freshrss overlay (netbsd-freshrss): build from pkgsrc, not pkgin
+php_freshrss_pkgsrc_build_tools:
+  - { path: archivers/libzip, creates: /usr/pkg/include/zip.h }
+  - { path: devel/re2c, creates: /usr/pkg/bin/re2c }
+  - { path: devel/bison, creates: /usr/pkg/bin/bison }
+  - { path: devel/cmake, creates: /usr/pkg/bin/cmake }
+  - { path: www/curl, creates: /usr/pkg/bin/curl }
+  - { path: devel/meson, creates: /usr/pkg/bin/meson }
 
 # PHP-FPM configuration
 php_fpm_pool: "fpm"

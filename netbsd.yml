@@ -17,7 +17,7 @@
     postgresql_version_major: "16"
   roles:
     - { role: os-release, tags: ["system", "os-release"] }
-    - { role: netbsd-pkgin, tags: ["system", "netbsd-pkgin"] }
+#    - { role: netbsd-pkgin, tags: ["system", "netbsd-pkgin"] }
     - { role: netbsd-pkgsrc, tags: ["system", "netbsd-pkgsrc"] }
     - { role: netbsd-python, tags: ["system", "netbsd-python"] }
     - { role: netbsd-misc-packages, tags: ["system", "netbsd-misc-packages"] }

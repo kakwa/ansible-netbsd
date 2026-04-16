@@ -1,75 +1,75 @@
 - name: Set architecture fact for pkgin
   set_fact:
-    arch: "{{ ansible_architecture | default(lookup('pipe', 'uname -m')) }}"
+    arch: "{{ ansible_facts['architecture'] | default(lookup('pipe', 'uname -m')) }}"
 
 - name: Set major version fact for pkgin
   set_fact:
-    major_version: "{{ ansible_kernel | default(lookup('pipe', 'uname -r')) | regex_replace('\\..*', '') }}"
+    major_version: "{{ ansible_facts['kernel'] | default(lookup('pipe', 'uname -r')) | regex_replace('\\..*', '') }}"
 
-- name: Get pkgin repository index HTML
-  uri:
-    url: "https://cdn.netbsd.org/pub/pkgsrc/packages/NetBSD/{{ arch }}/"
-    return_content: yes
-  register: repo_index
-  when: pkgin_use_official_repos and not pkgin_only_custom_repos
-
-- name: Extract repository directories for major version
-  set_fact:
-    pkgin_repos: >-
-      {{ repo_index.content | regex_findall('href="([^/]+/)"')
-         | select('match', '^' ~ (major_version | string))
-         | list }}
-  when: pkgin_use_official_repos and not pkgin_only_custom_repos
-
-- name: Build official repository URLs
-  set_fact:
-    pkgin_official_repo_urls: >-
-      {{ pkgin_repos | map('regex_replace', '^(.*)$', 'https://cdn.netbsd.org/pub/pkgsrc/packages/NetBSD/' ~ arch ~ '/\1All') | list }}
-  when: pkgin_use_official_repos and not pkgin_only_custom_repos
-
-- name: Initialize empty official repos list if not using them
-  set_fact:
-    pkgin_official_repo_urls: []
-  when: not pkgin_use_official_repos or pkgin_only_custom_repos
-
-- name: Validate custom repository URLs
-  uri:
-    url: "{{ item }}/pkg_summary.gz"
-    method: HEAD
-    status_code: [200, 404]
-  register: custom_repo_validation
-  loop: "{{ pkgin_custom_repo_urls }}"
-  when: pkgin_custom_repo_urls | length > 0
-  failed_when: false
-
-- name: Filter valid custom repository URLs
-  set_fact:
-    pkgin_valid_custom_repo_urls: >-
-      {{ pkgin_custom_repo_urls | zip(custom_repo_validation.results | default([])) | 
-         selectattr('1.status', 'equalto', 200) | 
-         map(attribute='0') | list }}
-  when: pkgin_custom_repo_urls | length > 0
-
-- name: Set empty valid custom repos if none provided
-  set_fact:
-    pkgin_valid_custom_repo_urls: []
-  when: pkgin_custom_repo_urls | length == 0
-
-- name: Combine official and validated custom repository URLs
-  set_fact:
-    pkgin_repo_urls: "{{ pkgin_official_repo_urls + pkgin_valid_custom_repo_urls }}"
-
-- name: Ensure pkgin repositories.conf is configured
-  template:
-    src: repositories.conf.j2
-    dest: /usr/pkg/etc/pkgin/repositories.conf
-    owner: root
-    group: wheel
-    mode: '0644'
-  register: repositories_conf_result
-
-- name: Update repositories index
-  community.general.pkgin:
-    update_cache: true
-  when: repositories_conf_result.changed
+#- name: Get pkgin repository index HTML
+#  uri:
+#    url: "https://cdn.netbsd.org/pub/pkgsrc/packages/NetBSD/{{ arch }}/"
+#    return_content: yes
+#  register: repo_index
+#  when: pkgin_use_official_repos and not pkgin_only_custom_repos
+#
+#- name: Extract repository directories for major version
+#  set_fact:
+#    pkgin_repos: >-
+#      {{ repo_index.content | regex_findall('href="([^/]+/)"')
+#         | select('match', '^' ~ (major_version | string))
+#         | list }}
+#  when: pkgin_use_official_repos and not pkgin_only_custom_repos
+#
+#- name: Build official repository URLs
+#  set_fact:
+#    pkgin_official_repo_urls: >-
+#      {{ pkgin_repos | map('regex_replace', '^(.*)$', 'https://cdn.netbsd.org/pub/pkgsrc/packages/NetBSD/' ~ arch ~ '/\1All') | list }}
+#  when: pkgin_use_official_repos and not pkgin_only_custom_repos
+#
+#- name: Initialize empty official repos list if not using them
+#  set_fact:
+#    pkgin_official_repo_urls: []
+#  when: not pkgin_use_official_repos or pkgin_only_custom_repos
+#
+#- name: Validate custom repository URLs
+#  uri:
+#    url: "{{ item }}/pkg_summary.gz"
+#    method: HEAD
+#    status_code: [200, 404]
+#  register: custom_repo_validation
+#  loop: "{{ pkgin_custom_repo_urls }}"
+#  when: pkgin_custom_repo_urls | length > 0
+#  failed_when: false
+#
+#- name: Filter valid custom repository URLs
+#  set_fact:
+#    pkgin_valid_custom_repo_urls: >-
+#      {{ pkgin_custom_repo_urls | zip(custom_repo_validation.results | default([])) | 
+#         selectattr('1.status', 'equalto', 200) | 
+#         map(attribute='0') | list }}
+#  when: pkgin_custom_repo_urls | length > 0
+#
+#- name: Set empty valid custom repos if none provided
+#  set_fact:
+#    pkgin_valid_custom_repo_urls: []
+#  when: pkgin_custom_repo_urls | length == 0
+#
+#- name: Combine official and validated custom repository URLs
+#  set_fact:
+#    pkgin_repo_urls: "{{ pkgin_official_repo_urls + pkgin_valid_custom_repo_urls }}"
+#
+#- name: Ensure pkgin repositories.conf is configured
+#  template:
+#    src: repositories.conf.j2
+#    dest: /usr/pkg/etc/pkgin/repositories.conf
+#    owner: root
+#    group: wheel
+#    mode: '0644'
+#  register: repositories_conf_result
+#
+#- name: Update repositories index
+#  community.general.pkgin:
+#    update_cache: true
+#  when: repositories_conf_result.changed
 

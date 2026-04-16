@@ -77,3 +77,7 @@
     - all_domains | length > 0
     - letsencrypt_request_enabled | default(false)
     - certbot_staging_result is defined
+
+- name: Include OVH DNS-01 certbot tasks (wildcard)
+  ansible.builtin.include_tasks: setup_ssl_ovh_dns.yml
+  when: letsencrypt_dns_ovh_enabled | default(false)

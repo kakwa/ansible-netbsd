@@ -13,7 +13,7 @@ putenv('TTRSS_DB_PORT={{ ttrss_db_port }}');
 
 putenv('TTRSS_SELF_URL_PATH=https://{{ ttrss_domain }}/');
 
-putenv('TTRSS_FEED_CRYPT_KEY={{ ansible_date_time.epoch | random | string }}');
+putenv('TTRSS_FEED_CRYPT_KEY={{ ansible_facts['date_time']['epoch'] | random | string }}');
 
 define('SINGLE_USER_MODE', {{ ttrss_single_user_mode | lower }});
 

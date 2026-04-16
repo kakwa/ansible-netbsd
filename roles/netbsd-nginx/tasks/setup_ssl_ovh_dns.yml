@@ -1,0 +1,71 @@
+---
+# Wildcard / DNS-01 via local pkgsrc: security/py-certbot-dns-ovh (make install).
+# Authenticator: dns-ovh — python-ovh reads /root/.ovh.conf when certbot runs as root.
+# OVH app keys: https://api.ovh.com/createToken/ (rights: GET/POST/PUT/DELETE on /domain/*)
+
+- name: Assert OVH API configuration is set for DNS-01
+  ansible.builtin.assert:
+    that:
+      - letsencrypt_ovh_conf is defined
+      - letsencrypt_ovh_conf | string | length > 0
+      - letsencrypt_dns_ovh_certificates | default([]) | length > 0
+    fail_msg: >-
+      Set letsencrypt_ovh_conf (vault: multiline ovh.conf) and a non-empty
+      letsencrypt_dns_ovh_certificates list when letsencrypt_dns_ovh_enabled is true.
+
+- name: Check pkgsrc tree for py-certbot-dns-ovh
+  ansible.builtin.stat:
+    path: "{{ letsencrypt_dns_ovh_pkgsrc_path }}/Makefile"
+  register: certbot_dns_ovh_pkgsrc_makefile
+
+- name: Assert py-certbot-dns-ovh pkgsrc directory exists
+  ansible.builtin.assert:
+    that:
+      - certbot_dns_ovh_pkgsrc_makefile.stat.exists | default(false)
+    fail_msg: >-
+      Missing {{ letsencrypt_dns_ovh_pkgsrc_path }}/Makefile — clone or sync pkgsrc and ensure
+      security/py-certbot-dns-ovh is present (see letsencrypt_dns_ovh_pkgsrc_path).
+
+- name: Build and install py-certbot-dns-ovh from pkgsrc
+  ansible.builtin.command: make install
+  args:
+    chdir: "{{ letsencrypt_dns_ovh_pkgsrc_path }}"
+    creates: "{{ letsencrypt_dns_ovh_pkgsrc_creates }}"
+
+- name: Install OVH API config for python-ovh (root)
+  ansible.builtin.copy:
+    dest: /root/.ovh.conf
+    content: "{{ letsencrypt_ovh_conf }}"
+    owner: root
+    group: wheel
+    mode: "0600"
+  no_log: true
+
+- name: Request Let's Encrypt certificate via OVH DNS-01
+  ansible.builtin.shell: |
+    set -o noglob
+    exec /usr/pkg/bin/certbot certonly \
+      --authenticator dns-ovh \
+      --non-interactive --agree-tos --email "{{ ssl_email }}" --no-eff-email \
+      {% if ssl_staging | bool %}--staging{% endif %} \
+      {% for d in cert_item.domains %}-d '{{ d }}' {% endfor %} \
+      --dns-ovh-propagation-seconds {{ letsencrypt_dns_ovh_propagation_seconds | int }}
+  args:
+    executable: /bin/sh
+  loop: "{{ letsencrypt_dns_ovh_certificates }}"
+  loop_control:
+    loop_var: cert_item
+    label: "{{ cert_item.domains | join(', ') }}"
+  register: certbot_ovh_result
+  changed_when:
+    - rc == 0
+    - "'Certificate not yet due for renewal' not in stdout"
+  ignore_errors: true
+
+- name: Show certbot OVH DNS-01 results
+  ansible.builtin.debug:
+    msg: "{{ item.stdout_lines | default([]) }}"
+  loop: "{{ certbot_ovh_result.results | default([]) }}"
+  when: item.stdout_lines is defined
+  loop_control:
+    label: "{{ item.item.domains | default([]) | join(', ') }}"

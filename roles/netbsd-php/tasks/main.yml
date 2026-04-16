@@ -1,60 +1,70 @@
 ---
-- name: Install PHP build dependencies
-  community.general.pkgin:
-    name: "{{ php_packages }}"
-    state: present
+# PHP stack from pkgsrc only (avoid pkgin binary graphs on minimal NetBSD images)
 
 - name: Build and install PHP from pkgsrc
-  command: make install
+  ansible.builtin.command: make install
   args:
     chdir: "{{ php_pkgsrc_dir }}"
     creates: "{{ php_binary }}"
+  environment:
+    BATCH: "1"
   become: true
 
 - name: Build and install PHP-FPM from pkgsrc
-  command: make install
+  ansible.builtin.command: make install
   args:
-    chdir: /usr/pkgsrc/www/php-fpm
+    chdir: "{{ pkgsrc_tree }}/www/php-fpm"
     creates: "{{ php_fpm_binary }}"
+  environment:
+    BATCH: "1"
   become: true
 
-- name: Build and install PHP-PDO from pkgsrc
-  command: make install
+- name: Build and install PHP PDO from pkgsrc
+  ansible.builtin.command: make install
   args:
-    chdir: /usr/pkgsrc/databases/php-pdo
+    chdir: "{{ pkgsrc_tree }}/databases/php-pdo"
     creates: "{{ php_config_dir }}/pdo.ini"
+  environment:
+    BATCH: "1"
   become: true
 
-- name: Build and install PHP-PDO from pkgsrc
-  command: make install
+- name: Build and install PHP PDO PostgreSQL from pkgsrc
+  ansible.builtin.command: make install
   args:
-    chdir: /usr/pkgsrc/databases/php-pdo_pgsql
+    chdir: "{{ pkgsrc_tree }}/databases/php-pdo_pgsql"
     creates: "{{ php_etc_dir }}/php.d/pdo_pgsql.ini"
+  environment:
+    BATCH: "1"
   become: true
 
-- name: Build and install PHP-INT from pkgsrc
-  command: make install
+- name: Build and install PHP intl from pkgsrc
+  ansible.builtin.command: make install
   args:
-    chdir: /usr/pkgsrc/textproc/php-intl
+    chdir: "{{ pkgsrc_tree }}/textproc/php-intl"
     creates: "{{ php_config_dir }}/intl.ini"
+  environment:
+    BATCH: "1"
   become: true
 
-- name: Install FreshRSS build dependencies
-  community.general.pkgin:
-    name:
-      - meson
-      - curl
-      - cmake
-      - bison
-      - re2c
-      - libzip
-    state: present
-
-- name: Build and install php-curl
-  command: make install
+- name: Build FreshRSS overlay build tools from pkgsrc
+  ansible.builtin.command: make install
   args:
-    chdir: /usr/pkgsrc/www/php-curl/
+    chdir: "{{ pkgsrc_tree }}/{{ item.path }}"
+    creates: "{{ item.creates }}"
+  environment:
+    BATCH: "1"
+  loop: "{{ php_freshrss_pkgsrc_build_tools }}"
+  loop_control:
+    label: "{{ pkgsrc_tree }}/{{ item.path }}"
+  become: true
+
+- name: Build and install PHP curl from pkgsrc
+  ansible.builtin.command: make install
+  args:
+    chdir: "{{ pkgsrc_tree }}/www/php-curl/"
     creates: "{{ php_config_dir }}/curl.ini"
+  environment:
+    BATCH: "1"
   become: true
 
 - name: Create PHP-FPM user
@@ -108,5 +118,3 @@
     state: started
     enabled: true
   become: true
-
-

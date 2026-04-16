@@ -48,6 +48,15 @@
     enabled: true
   become: true
 
+- name: Build and install py-psycopg2 from pkgsrc
+  ansible.builtin.command: make install
+  args:
+    chdir: "{{ postgresql_psycopg2_pkgsrc_path }}"
+    creates: "{{ postgresql_psycopg2_creates }}"
+  environment:
+    BATCH: "1"
+  become: true
+
 - name: Ensure PostgreSQL users exist
   postgresql_user:
     login_user: pgsql

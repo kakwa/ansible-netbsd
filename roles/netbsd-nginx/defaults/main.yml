@@ -8,18 +8,30 @@ python_version_short: "{{ python_version_major }}{{ python_version_minor }}"
 # Derived Python package names
 python_binary: "python{{ python_version_short }}"
 python_package_prefix: "py{{ python_version_short }}"
+python_site_packages: "/usr/pkg/lib/python{{ python_version_major }}.{{ python_version_minor }}/site-packages"
 
-# Nginx packages
-nginx_packages:
-  - zlib
-  - pcre2
-  - "{{ python_package_prefix }}-certbot-nginx"
-  - "{{ python_package_prefix }}-passlib"
+# pkgsrc tree (same layout as netbsd-pkgsrc: /usr/pkgsrc)
+pkgsrc_tree: /usr/pkgsrc
 
+# Order: deps first, www/nginx last. Override paths if your tree differs.
+nginx_pkgsrc_build_targets:
+  - { path: devel/zlib, creates: /usr/pkg/include/zlib.h }
+  - { path: devel/pcre2, creates: /usr/pkg/include/pcre2.h }
+  - { path: security/py-passlib, creates: "{{ python_site_packages }}/passlib/__init__.py" }
+  - { path: security/py-certbot-nginx, creates: "{{ python_site_packages }}/certbot_nginx/__init__.py" }
+  - { path: www/nginx, creates: /usr/pkg/sbin/nginx }
 
 # SSL configuration
 ssl_email: "admin@example.com"
 ssl_staging: false
+letsencrypt_request_enabled: false
+
+# OVH DNS-01 (optional); requires include in setup_ssl.yml when enabled
+letsencrypt_dns_ovh_enabled: false
+letsencrypt_dns_ovh_pkgsrc_path: "{{ pkgsrc_tree }}/security/py-certbot-dns-ovh"
+letsencrypt_dns_ovh_pkgsrc_creates: "{{ python_site_packages }}/certbot_dns_ovh/dns_ovh.py"
+letsencrypt_dns_ovh_propagation_seconds: 90
+letsencrypt_dns_ovh_certificates: []
 
 # Static website configurations (empty by default)
 static_sites: []

@@ -8,6 +8,12 @@ python_version_short: "{{ python_version_major }}{{ python_version_minor }}"
 # Derived Python package names
 python_binary: "python{{ python_version_short }}"
 python_package_prefix: "py{{ python_version_short }}"
+python_site_packages: "/usr/pkg/lib/python{{ python_version_major }}.{{ python_version_minor }}/site-packages"
+
+# pkgsrc (Ansible postgresql_* modules need psycopg2 on the managed node)
+pkgsrc_tree: /usr/pkgsrc
+postgresql_psycopg2_pkgsrc_path: "{{ pkgsrc_tree }}/databases/py-psycopg2"
+postgresql_psycopg2_creates: "{{ python_site_packages }}/psycopg2/__init__.py"
 
 # PostgreSQL version configuration (can be overridden at playbook level)
 postgresql_version_major: "16"
@@ -16,11 +22,10 @@ postgresql_version_major: "16"
 postgresql_server_package: "postgresql{{ postgresql_version_major }}-server"
 postgresql_client_package: "postgresql{{ postgresql_version_major }}-client"
 
-# PostgreSQL packages
+# PostgreSQL packages (psycopg2: see tasks — built from pkgsrc databases/py-psycopg2)
 postgresql_packages:
   - "{{ postgresql_server_package }}"
   - "{{ postgresql_client_package }}"
-  - "{{ python_package_prefix }}-psycopg2"
 
 # PostgreSQL databases configuration
 # List of databases to create, each with name, user, and password

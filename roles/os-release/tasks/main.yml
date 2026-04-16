@@ -5,4 +5,4 @@
     owner: root
     group: wheel
     mode: '0644'
-  when: ansible_os_family == "NetBSD"
+  when: ansible_facts['os_family'] == "NetBSD"

@@ -1,0 +1,5 @@
+---
+# Same layout as netbsd-nginx / netbsd-pkgsrc
+pkgsrc_tree: /usr/pkgsrc
+sysupgrade_pkgsrc_path: "{{ pkgsrc_tree }}/sysutils/sysupgrade"
+sysupgrade_binary: /usr/pkg/bin/sysupgrade

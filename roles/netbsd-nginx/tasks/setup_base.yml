@@ -1,18 +1,14 @@
 ---
-# Base nginx installation and configuration
+# Base nginx installation and configuration (pkgsrc: make install only)
 
-- name: Install nginx and certbot packages
-  community.general.pkgin:
-    name: "{{ nginx_packages }}"
-    state: present
-  tags:
-    - nginx-base
-
-- name: Build and install nginx from pkgsrc
-  command: make install
+- name: Build and install nginx stack from pkgsrc (make install)
+  ansible.builtin.command: make install
   args:
-    chdir: /usr/pkgsrc/www/nginx
-    creates: /usr/pkg/sbin/nginx
+    chdir: "{{ pkgsrc_tree }}/{{ item.path }}"
+    creates: "{{ item.creates }}"
+  loop: "{{ nginx_pkgsrc_build_targets }}"
+  loop_control:
+    label: "{{ pkgsrc_tree }}/{{ item.path }}"
   become: true
   tags:
     - nginx-base

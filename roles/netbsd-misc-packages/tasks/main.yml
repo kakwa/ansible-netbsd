@@ -1,11 +1,20 @@
 ---
+# Binary packages via pkgin (pkgsrc); sysupgrade is often absent from pkgin mirrors.
 - name: Install miscellaneous packages
   community.general.pkgin:
     name:
       - tree
       - rsync
       - wget
-      - sysupgrade
       - pkg_chk
       - git
     state: present
+
+- name: Build and install sysupgrade from pkgsrc
+  ansible.builtin.command: make install
+  args:
+    chdir: "{{ sysupgrade_pkgsrc_path }}"
+    creates: "{{ sysupgrade_binary }}"
+  environment:
+    BATCH: "1"
+  become: true

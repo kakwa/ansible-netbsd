@@ -1,0 +1,104 @@
+{# Dedicated vhost: *.kakwalab.dev -> *.int.kakwalab.dev (DNS on the internal zone). #}
+{% set ups_scheme = item.upstream_scheme | default('http') %}
+{% set ups_port = item.upstream_port | default('443' if ups_scheme == 'https' else '80') %}
+{% set cert_domain = item.ssl_certificate_domain | default('kakwalab.dev') %}
+
+map $host $kakwalab_dev_wildcard_int_host {
+    ~^([^.]+)\.kakwalab\.dev$ $1.int.kakwalab.dev;
+    default "";
+}
+
+server {
+    listen 80;
+    listen [::]:80;
+    server_name {{ item.domain }};
+
+    return 301 https://$host$request_uri;
+}
+
+server {
+    listen 443 ssl;
+    listen [::]:443 ssl;
+    http2 on;
+    server_name {{ item.domain }};
+
+{% if cert_domain in letsencrypt_available_certs %}
+    ssl_certificate /usr/pkg/etc/letsencrypt/live/{{ cert_domain }}/fullchain.pem;
+    ssl_certificate_key /usr/pkg/etc/letsencrypt/live/{{ cert_domain }}/privkey.pem;
+{% elif primary_letsencrypt_domain %}
+    ssl_certificate /usr/pkg/etc/letsencrypt/live/{{ primary_letsencrypt_domain }}/fullchain.pem;
+    ssl_certificate_key /usr/pkg/etc/letsencrypt/live/{{ primary_letsencrypt_domain }}/privkey.pem;
+{% else %}
+    ssl_certificate /usr/pkg/etc/nginx/ssl/selfsigned.crt;
+    ssl_certificate_key /usr/pkg/etc/nginx/ssl/selfsigned.key;
+{% endif %}
+
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header Referrer-Policy "no-referrer-when-downgrade" always;
+
+    access_log /var/log/nginx/{{ item.name }}_access.log;
+    error_log /var/log/nginx/{{ item.name }}_error.log;
+
+{% if item.auth_enabled | default(false) %}
+    auth_basic "Restricted Access";
+    auth_basic_user_file /usr/pkg/etc/nginx/.htpasswd.{{ item.name }};
+{% endif %}
+
+    location / {
+{% if nginx_dns_resolvers is defined and nginx_dns_resolvers | length > 0 %}
+        resolver {{ nginx_dns_resolvers | join(' ') }} valid={{ nginx_dns_valid_time }}{% if not nginx_dns_ipv6 %} ipv6=off{% endif %};
+        resolver_timeout {{ nginx_dns_timeout }};
+{% endif %}
+
+{% if item.auth_enabled | default(false) %}
+        add_header Cache-Control "no-cache, no-store, must-revalidate" always;
+        add_header Pragma "no-cache" always;
+        add_header Expires "0" always;
+{% endif %}
+
+        proxy_pass {{ ups_scheme }}://$kakwalab_dev_wildcard_int_host:{{ ups_port }}/;
+        proxy_set_header Host $kakwalab_dev_wildcard_int_host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Host $host;
+        proxy_set_header X-Forwarded-Port $server_port;
+
+{% if ups_scheme == 'https' and not (item.ssl_verify | default(reverse_proxy_defaults.ssl_verify | default(true))) %}
+        proxy_ssl_verify off;
+        proxy_ssl_server_name on;
+{% endif %}
+
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection $connection_upgrade;
+
+        proxy_connect_timeout 60s;
+{% if item.websocket_path is defined %}
+        proxy_send_timeout 3600s;
+        proxy_read_timeout 3600s;
+{% else %}
+        proxy_send_timeout 60s;
+        proxy_read_timeout 60s;
+{% endif %}
+
+        proxy_next_upstream error timeout invalid_header http_500 http_502 http_503 http_504;
+
+{% if item.websocket_path is defined %}
+        proxy_buffering off;
+{% else %}
+        proxy_buffering on;
+        proxy_buffer_size 4k;
+        proxy_buffers 8 4k;
+        proxy_busy_buffers_size 8k;
+{% endif %}
+    }
+
+    location /health {
+        access_log off;
+        return 200 "healthy\n";
+        add_header Content-Type text/plain;
+    }
+}
