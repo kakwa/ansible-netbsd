@@ -1,7 +1,22 @@
 ---
-# Wildcard / DNS-01 via local pkgsrc: security/py-certbot-dns-ovh (make install).
-# Authenticator: dns-ovh — python-ovh reads /root/.ovh.conf when certbot runs as root.
+# Wildcard / DNS-01: certbot authenticator dns-ovh — python-ovh reads /root/.ovh.conf when certbot runs as root.
 # OVH app keys: https://api.ovh.com/createToken/ (rights: GET/POST/PUT/DELETE on /domain/*)
+# Plugin install: letsencrypt_dns_ovh_install_method pkgsrc (make install) or copy (controller -> site-packages).
+
+- name: Assemble OVH API config from key variables when multiline conf is not provided
+  ansible.builtin.set_fact:
+    letsencrypt_ovh_conf: |
+      [default]
+      endpoint={{ letsencrypt_ovh_endpoint | default('ovh-eu') }}
+      application_key={{ letsencrypt_ovh_application_key }}
+      application_secret={{ letsencrypt_ovh_application_secret }}
+      consumer_key={{ letsencrypt_ovh_consumer_key }}
+  when:
+    - (letsencrypt_ovh_conf | default('') | string | length) == 0
+    - letsencrypt_ovh_application_key | default('') | string | length > 0
+    - letsencrypt_ovh_application_secret | default('') | string | length > 0
+    - letsencrypt_ovh_consumer_key | default('') | string | length > 0
+  no_log: true
 
 - name: Assert OVH API configuration is set for DNS-01
   ansible.builtin.assert:
@@ -10,27 +25,117 @@
       - letsencrypt_ovh_conf | string | length > 0
       - letsencrypt_dns_ovh_certificates | default([]) | length > 0
     fail_msg: >-
-      Set letsencrypt_ovh_conf (vault: multiline ovh.conf) and a non-empty
-      letsencrypt_dns_ovh_certificates list when letsencrypt_dns_ovh_enabled is true.
+      Set letsencrypt_ovh_conf (vault: multiline ovh.conf) or all of
+      letsencrypt_ovh_application_key, letsencrypt_ovh_application_secret, letsencrypt_ovh_consumer_key
+      (optional letsencrypt_ovh_endpoint), and a non-empty letsencrypt_dns_ovh_certificates list
+      when letsencrypt_dns_ovh_enabled is true.
 
-- name: Check pkgsrc tree for py-certbot-dns-ovh
-  ansible.builtin.stat:
-    path: "{{ letsencrypt_dns_ovh_pkgsrc_path }}/Makefile"
-  register: certbot_dns_ovh_pkgsrc_makefile
+- name: Install py-certbot-dns-ovh from pkgsrc
+  when: (letsencrypt_dns_ovh_install_method | default('pkgsrc')) == 'pkgsrc'
+  block:
+    - name: Check pkgsrc tree for py-certbot-dns-ovh
+      ansible.builtin.stat:
+        path: "{{ letsencrypt_dns_ovh_pkgsrc_path }}/Makefile"
+      register: certbot_dns_ovh_pkgsrc_makefile
 
-- name: Assert py-certbot-dns-ovh pkgsrc directory exists
-  ansible.builtin.assert:
-    that:
-      - certbot_dns_ovh_pkgsrc_makefile.stat.exists | default(false)
-    fail_msg: >-
-      Missing {{ letsencrypt_dns_ovh_pkgsrc_path }}/Makefile — clone or sync pkgsrc and ensure
-      security/py-certbot-dns-ovh is present (see letsencrypt_dns_ovh_pkgsrc_path).
+    - name: Assert py-certbot-dns-ovh pkgsrc directory exists
+      ansible.builtin.assert:
+        that:
+          - certbot_dns_ovh_pkgsrc_makefile.stat.exists | default(false)
+        fail_msg: >-
+          Missing {{ letsencrypt_dns_ovh_pkgsrc_path }}/Makefile — clone or sync pkgsrc and ensure
+          security/py-certbot-dns-ovh is present (see letsencrypt_dns_ovh_pkgsrc_path), or set
+          letsencrypt_dns_ovh_install_method: copy.
 
-- name: Build and install py-certbot-dns-ovh from pkgsrc
-  ansible.builtin.command: make install
-  args:
-    chdir: "{{ letsencrypt_dns_ovh_pkgsrc_path }}"
-    creates: "{{ letsencrypt_dns_ovh_pkgsrc_creates }}"
+    - name: Build and install py-certbot-dns-ovh from pkgsrc
+      ansible.builtin.command: make install
+      args:
+        chdir: "{{ letsencrypt_dns_ovh_pkgsrc_path }}"
+        creates: "{{ letsencrypt_dns_ovh_pkgsrc_creates }}"
+
+- name: Install certbot_dns_ovh module by copying dns_ovh.py into site-packages
+  when: (letsencrypt_dns_ovh_install_method | default('pkgsrc')) == 'copy'
+  block:
+    - name: Ensure certbot_dns_ovh package directory exists
+      ansible.builtin.file:
+        path: "{{ python_site_packages }}/certbot_dns_ovh"
+        state: directory
+        owner: root
+        group: wheel
+        mode: "0755"
+
+    - name: Install certbot_dns_ovh __init__.py (copy layout)
+      ansible.builtin.copy:
+        dest: "{{ python_site_packages }}/certbot_dns_ovh/__init__.py"
+        content: |
+          """certbot_dns_ovh package (Ansible copy install)."""
+        owner: root
+        group: wheel
+        mode: "0644"
+
+    - name: Install certbot_dns_ovh dns_ovh.py from controller
+      ansible.builtin.copy:
+        src: "{{ letsencrypt_dns_ovh_copy_src | default('dns_ovh.py') }}"
+        dest: "{{ python_site_packages }}/certbot_dns_ovh/dns_ovh.py"
+        owner: root
+        group: wheel
+        mode: "0644"
+
+    - name: Ensure certbot_dns_ovh dist-info directory exists (optional plugin registration)
+      ansible.builtin.file:
+        path: "{{ python_site_packages }}/certbot_dns_ovh-{{ letsencrypt_dns_ovh_copy_distinfo_version }}.dist-info"
+        state: directory
+        owner: root
+        group: wheel
+        mode: "0755"
+      when: letsencrypt_dns_ovh_copy_provide_entry_points | default(true) | bool
+
+    - name: Write certbot_dns_ovh dist-info METADATA
+      ansible.builtin.copy:
+        dest: "{{ python_site_packages }}/certbot_dns_ovh-{{ letsencrypt_dns_ovh_copy_distinfo_version }}.dist-info/METADATA"
+        content: |
+          Metadata-Version: 2.1
+          Name: certbot-dns-ovh
+          Version: {{ letsencrypt_dns_ovh_copy_distinfo_version }}
+          Summary: OVH DNS Authenticator for Certbot (Ansible copy install)
+        owner: root
+        group: wheel
+        mode: "0644"
+      when: letsencrypt_dns_ovh_copy_provide_entry_points | default(true) | bool
+
+    - name: Write certbot_dns_ovh dist-info entry_points.txt
+      ansible.builtin.copy:
+        dest: "{{ python_site_packages }}/certbot_dns_ovh-{{ letsencrypt_dns_ovh_copy_distinfo_version }}.dist-info/entry_points.txt"
+        content: |
+          [certbot.plugins]
+          dns-ovh = certbot_dns_ovh.dns_ovh:Authenticator
+        owner: root
+        group: wheel
+        mode: "0644"
+      when: letsencrypt_dns_ovh_copy_provide_entry_points | default(true) | bool
+
+    - name: Write certbot_dns_ovh dist-info INSTALLER
+      ansible.builtin.copy:
+        dest: "{{ python_site_packages }}/certbot_dns_ovh-{{ letsencrypt_dns_ovh_copy_distinfo_version }}.dist-info/INSTALLER"
+        content: |
+          ansible
+        owner: root
+        group: wheel
+        mode: "0644"
+      when: letsencrypt_dns_ovh_copy_provide_entry_points | default(true) | bool
+
+    - name: Write certbot_dns_ovh dist-info WHEEL
+      ansible.builtin.copy:
+        dest: "{{ python_site_packages }}/certbot_dns_ovh-{{ letsencrypt_dns_ovh_copy_distinfo_version }}.dist-info/WHEEL"
+        content: |
+          Wheel-Version: 1.0
+          Generator: ansible-netbsd (netbsd-nginx role)
+          Root-Is-Purelib: true
+          Tag: py3-none-any
+        owner: root
+        group: wheel
+        mode: "0644"
+      when: letsencrypt_dns_ovh_copy_provide_entry_points | default(true) | bool
 
 - name: Install OVH API config for python-ovh (root)
   ansible.builtin.copy:
@@ -44,12 +149,20 @@
 - name: Request Let's Encrypt certificate via OVH DNS-01
   ansible.builtin.shell: |
     set -o noglob
-    exec /usr/pkg/bin/certbot certonly \
+    dns_ovh_prop=""
+    {% if (letsencrypt_dns_ovh_propagation_seconds | default(0) | int) > 0 %}
+    dns_ovh_prop="--dns-ovh-propagation-seconds {{ letsencrypt_dns_ovh_propagation_seconds | int }}"
+    {% endif %}
+    exec {{ certbot_binary }} certonly \
       --authenticator dns-ovh \
       --non-interactive --agree-tos --email "{{ ssl_email }}" --no-eff-email \
-      {% if ssl_staging | bool %}--staging{% endif %} \
-      {% for d in cert_item.domains %}-d '{{ d }}' {% endfor %} \
-      --dns-ovh-propagation-seconds {{ letsencrypt_dns_ovh_propagation_seconds | int }}
+    {% if ssl_staging | bool %}
+      --staging \
+    {% endif %}
+    {% for d in cert_item.domains %}
+      -d '{{ d }}' \
+    {% endfor %}
+      $dns_ovh_prop {{ letsencrypt_dns_ovh_certbot_extra_args | default('') }}
   args:
     executable: /bin/sh
   loop: "{{ letsencrypt_dns_ovh_certificates }}"
@@ -58,8 +171,8 @@
     label: "{{ cert_item.domains | join(', ') }}"
   register: certbot_ovh_result
   changed_when:
-    - rc == 0
-    - "'Certificate not yet due for renewal' not in stdout"
+    - (rc | default(-1)) == 0
+    - "'Certificate not yet due for renewal' not in (stdout | default(''))"
   ignore_errors: true
 
 - name: Show certbot OVH DNS-01 results

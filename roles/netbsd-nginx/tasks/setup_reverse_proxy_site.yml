@@ -11,7 +11,7 @@
 
 - name: "Create reverse proxy nginx configuration for: {{ item.name }}"
   template:
-    src: reverse-proxy-nginx.conf.j2
+    src: "{{ item.template | default('reverse-proxy-nginx.conf.j2') }}"
     dest: "/usr/pkg/etc/nginx/sites-available/{{ item.name }}"
     owner: root
     group: wheel

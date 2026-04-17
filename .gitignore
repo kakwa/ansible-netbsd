@@ -1,4 +1,7 @@
 *.password.txt
+ovh_dns_application_key.txt
+ovh_dns_application_secret.txt
+ovh_dns_consumer_key.txt
 
 
 # Byte-compiled / optimized / DLL files

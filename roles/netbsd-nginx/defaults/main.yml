@@ -25,12 +25,26 @@ nginx_pkgsrc_build_targets:
 ssl_email: "admin@example.com"
 ssl_staging: false
 letsencrypt_request_enabled: false
+# pkgsrc py-certbot installs the CLI as certbot-<major>.<minor> (e.g. /usr/pkg/bin/certbot-3.12).
+certbot_binary: "/usr/pkg/bin/certbot-{{ python_version_full }}"
 
 # OVH DNS-01 (optional); requires include in setup_ssl.yml when enabled
 letsencrypt_dns_ovh_enabled: false
+# pkgsrc: make install in letsencrypt_dns_ovh_pkgsrc_path. copy: ship dns_ovh.py from the controller.
+letsencrypt_dns_ovh_install_method: copy
+# Path relative to this role's files/ or absolute path on the controller (see ansible.builtin.copy src).
+letsencrypt_dns_ovh_copy_src: dns_ovh.py
+# With install_method copy, write a minimal .dist-info so Certbot registers dns-ovh (required for
+# --authenticator dns-ovh and --dns-ovh-propagation-seconds). Set false only if py-certbot-dns-ovh
+# is already installed from pkgsrc/pip (avoid duplicate certbot.plugins entry points).
+letsencrypt_dns_ovh_copy_provide_entry_points: true
+# Directory name suffix: certbot_dns_ovh-<version>.dist-info (PEP 440-ish version string)
+letsencrypt_dns_ovh_copy_distinfo_version: "0.0.1"
 letsencrypt_dns_ovh_pkgsrc_path: "{{ pkgsrc_tree }}/security/py-certbot-dns-ovh"
 letsencrypt_dns_ovh_pkgsrc_creates: "{{ python_site_packages }}/certbot_dns_ovh/dns_ovh.py"
 letsencrypt_dns_ovh_propagation_seconds: 90
+# Appended to the certbot certonly line (e.g. --dns-ovh-credentials /path if your certbot needs it).
+letsencrypt_dns_ovh_certbot_extra_args: ""
 letsencrypt_dns_ovh_certificates: []
 
 # Static website configurations (empty by default)
@@ -42,6 +56,14 @@ reverse_proxies: []
 # Default reverse proxy settings
 reverse_proxy_defaults:
   ssl_verify: true  # Set to false to disable SSL certificate verification for HTTPS backends
+
+# Fallbacks for reverse-proxy-kakwalab-dev-wildcard.conf.j2 when item.public_suffix / item.internal_upstream_zone are omitted.
+# Set in your playbook (see netbsd-kakwa.yml); public_suffix and internal_upstream_zone must be non-empty for that template.
+reverse_proxy_wildcard_defaults:
+  public_suffix: ""
+  internal_upstream_zone: ""
+  # Optional; Let's Encrypt live/ directory basename (defaults to public_suffix when empty or omitted).
+  ssl_certificate_domain: ""
 
 # Nginx configuration
 nginx_worker_processes: "auto"

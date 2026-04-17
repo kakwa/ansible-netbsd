@@ -27,57 +27,81 @@
 
 - name: Collect all domains for certificate request
   set_fact:
-    all_domains: "{{ ([ttrss_domain] if ttrss_domain is defined else []) + 
-                     (static_sites | map(attribute='domain') | list) + 
-                     (reverse_proxies | map(attribute='domain') | list) }}"
+    all_domains: "{{ ([ttrss_domain] if ttrss_domain is defined else []) +
+                     (static_sites | map(attribute='domain') | list) +
+                     (reverse_proxies | map(attribute='domain') | list | select('match', '^[^*].*$') | list) }}"
+  tags:
+    - nginx-certbot
+    - certbot
 
 - name: Request SSL certificates with certbot (production)
   command: >
-    /usr/pkg/bin/certbot certonly --nginx
+    {{ certbot_binary }} certonly --nginx
     --email {{ ssl_email }}
     --agree-tos
     --no-eff-email
     --domains {{ all_domains | join(',') }}
     {% if ssl_staging %}--staging{% endif %}
   register: certbot_result
-  when: 
+  when:
     - not ssl_staging
     - all_domains | length > 0
     - letsencrypt_request_enabled | default(false)
   ignore_errors: true
+  tags:
+    - nginx-certbot
+    - certbot
 
 - name: Show certbot production results
   debug:
     msg: "{{ certbot_result.stdout_lines }}"
-  when: 
+  when:
     - not ssl_staging
     - all_domains | length > 0
     - letsencrypt_request_enabled | default(false)
     - certbot_result is defined
+  tags:
+    - nginx-certbot
+    - certbot
+
 - name: Request staging SSL certificates with certbot
   command: >
-    /usr/pkg/bin/certbot certonly --nginx
+    {{ certbot_binary }} certonly --nginx
     --email {{ ssl_email }}
     --agree-tos
     --no-eff-email
     --staging
     --domains {{ all_domains | join(',') }}
   register: certbot_staging_result
-  when: 
+  when:
     - ssl_staging
     - all_domains | length > 0
     - letsencrypt_request_enabled | default(false)
   ignore_errors: true
+  tags:
+    - nginx-certbot
+    - certbot
 
 - name: Show certbot staging results
   debug:
     msg: "{{ certbot_staging_result.stdout_lines }}"
-  when: 
+  when:
     - ssl_staging
     - all_domains | length > 0
     - letsencrypt_request_enabled | default(false)
     - certbot_staging_result is defined
+  tags:
+    - nginx-certbot
+    - certbot
 
 - name: Include OVH DNS-01 certbot tasks (wildcard)
-  ansible.builtin.include_tasks: setup_ssl_ovh_dns.yml
+  ansible.builtin.include_tasks:
+    file: setup_ssl_ovh_dns.yml
+    apply:
+      tags:
+        - nginx-certbot
+        - certbot
   when: letsencrypt_dns_ovh_enabled | default(false)
+  tags:
+    - nginx-certbot
+    - certbot

@@ -18,19 +18,30 @@
     - nginx-vhost
 
 - name: Include SSL certificate detection tasks
-  include_tasks: detect_ssl_certificates.yml
+  ansible.builtin.include_tasks:
+    file: detect_ssl_certificates.yml
+    apply:
+      tags:
+        - nginx-vhost
+        - nginx-certbot
+        - certbot
   tags:
     - nginx-vhost
+    - nginx-certbot
+    - certbot
 
 - name: Include SSL certificate tasks
-  include_tasks: setup_ssl.yml
+  ansible.builtin.include_tasks: setup_ssl.yml
   tags:
     - nginx-vhost
+    - nginx-certbot
+    - certbot
 
 - name: Include reverse proxy setup tasks
-  include_tasks: setup_reverse_proxies.yml
+  ansible.builtin.include_tasks: setup_reverse_proxies.yml
   tags:
     - nginx-vhost
+    - nginx-reverse-proxy-kakwalab-dev
 
 - name: Include static website setup tasks
   include_tasks: setup_static.yml
