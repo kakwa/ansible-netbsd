@@ -94,14 +94,3 @@
     - nginx-certbot
     - certbot
 
-- name: Include OVH DNS-01 certbot tasks (wildcard)
-  ansible.builtin.include_tasks:
-    file: setup_ssl_ovh_dns.yml
-    apply:
-      tags:
-        - nginx-certbot
-        - certbot
-  when: letsencrypt_dns_ovh_enabled | default(false)
-  tags:
-    - nginx-certbot
-    - certbot

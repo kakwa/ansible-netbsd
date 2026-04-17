@@ -1,5 +1,6 @@
 ---
-# Standard vhosts: any reverse_proxies entry that is not the Kakwalab.dev wildcard template.
+# Standard vhosts: entries using kakwalab-dev-reverse (reverse-proxy-kakwalab-dev-wildcard.conf.j2)
+# are deployed by that role after netbsd-nginx.
 - name: Configure reverse proxy sites
   ansible.builtin.include_tasks:
     file: setup_reverse_proxy_site.yml
@@ -17,26 +18,4 @@
   when: reverse_proxies is defined
   tags:
     - nginx-vhost
-
-# Wildcard https://*.kakwalab.dev gateway (template reverse-proxy-kakwalab-dev-wildcard.conf.j2).
-- name: Configure Kakwalab.dev wildcard reverse proxy site
-  ansible.builtin.include_tasks:
-    file: setup_reverse_proxy_site.yml
-    apply:
-      tags:
-        - nginx-vhost
-        - nginx-reverse-proxy-kakwalab-dev
-  loop: >-
-    {{
-      reverse_proxies | default([])
-      | selectattr('template', 'defined')
-      | selectattr('template', 'equalto', 'reverse-proxy-kakwalab-dev-wildcard.conf.j2')
-      | list
-    }}
-  loop_control:
-    extended: true
-  when: reverse_proxies is defined
-  tags:
-    - nginx-vhost
-    - nginx-reverse-proxy-kakwalab-dev
 

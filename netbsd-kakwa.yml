@@ -36,24 +36,12 @@
       tags: ["system", "netbsd-mdns"]
       vars:
         mdns_enable_unbound_forwarder: true
-        mdns_dns_forwarders: ["192.168.1.254"]
+        mdns_dns_forwarders: ["192.168.1.25"]
     - role: netbsd-nginx
       tags: ["service", "netbsd-nginx"]
       vars:
         nginx_dns_resolvers: ["127.0.0.1"]
-        reverse_proxy_wildcard_defaults:
-          public_suffix: kakwalab.dev
-          internal_upstream_zone: int.kakwalab.ovh
-          ssl_certificate_domain: kakwalab.dev
         ssl_email: "{{ vault_letsencrypt_email | default('hostmaster@kakwalab.ovh') }}"
-        letsencrypt_dns_ovh_enabled: true
-        letsencrypt_ovh_application_key: "{{ vault_docker_registry_ovh_application_key | default(lookup('file', playbook_dir ~ '/ovh_dns_application_key.txt') | trim, true) }}"
-        letsencrypt_ovh_application_secret: "{{ vault_docker_registry_ovh_application_secret | default(lookup('file', playbook_dir ~ '/ovh_dns_application_secret.txt') | trim, true) }}"
-        letsencrypt_ovh_consumer_key: "{{ vault_docker_registry_ovh_consumer_key | default(lookup('file', playbook_dir ~ '/ovh_dns_consumer_key.txt') | trim, true) }}"
-        letsencrypt_dns_ovh_certificates:
-          - domains:
-              - "kakwalab.dev"
-              - "*.kakwalab.dev"
         # Default page branding
         nginx_branding: "kakwalab"
         nginx_page_title: "Welcome in Kakwalab"
@@ -72,9 +60,6 @@
             autoindex: true
             index: ""
         reverse_proxies:
-          - name: "kakwalab-dev-wildcard"
-            domain: "*.kakwalab.dev"
-            template: reverse-proxy-kakwalab-dev-wildcard.conf.j2
           - name: "voron0"
             domain: "voron0.kakwalab.ovh"
             upstream: "https://voron0.local/"
@@ -98,6 +83,13 @@
             auth_enabled: true
             auth_user: "kakwa"
             auth_password: "{{ vault_proxy_password | default(lookup('password', './proxy.password.txt chars=ascii_letters,digits length=16')) }}"
+    - role: kakwalab-dev-reverse
+      tags: ["service", "netbsd-nginx", "kakwalab-dev-reverse"]
+      vars:
+        ssl_email: "{{ vault_letsencrypt_email | default('hostmaster@kakwalab.ovh') }}"
+        letsencrypt_ovh_application_key: "{{ vault_docker_registry_ovh_application_key | default(lookup('file', playbook_dir ~ '/ovh_dns_application_key.txt') | trim, true) }}"
+        letsencrypt_ovh_application_secret: "{{ vault_docker_registry_ovh_application_secret | default(lookup('file', playbook_dir ~ '/ovh_dns_application_secret.txt') | trim, true) }}"
+        letsencrypt_ovh_consumer_key: "{{ vault_docker_registry_ovh_consumer_key | default(lookup('file', playbook_dir ~ '/ovh_dns_consumer_key.txt') | trim, true) }}"
     - role: netbsd-postgresql
       tags: ["service", "netbsd-postgresql"]
       vars:

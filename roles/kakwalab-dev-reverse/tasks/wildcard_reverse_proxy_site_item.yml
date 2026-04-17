@@ -1,0 +1,15 @@
+---
+- name: Create kakwalab.dev wildcard gateway nginx configuration
+  ansible.builtin.template:
+    src: reverse-proxy-kakwalab-dev-wildcard.conf.j2
+    dest: /usr/pkg/etc/nginx/sites-available/kakwalab-dev-wildcard
+    owner: root
+    group: wheel
+    mode: "0644"
+  notify: reload nginx
+
+- name: Enable kakwalab.dev wildcard gateway site
+  ansible.builtin.file:
+    src: /usr/pkg/etc/nginx/sites-available/kakwalab-dev-wildcard
+    dest: /usr/pkg/etc/nginx/sites-enabled/kakwalab-dev-wildcard
+    state: link

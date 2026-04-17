@@ -1,0 +1,3 @@
+---
+- name: Deploy kakwalab.dev wildcard gateway
+  ansible.builtin.include_tasks: wildcard_reverse_proxy_site_item.yml

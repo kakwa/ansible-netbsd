@@ -1,0 +1,26 @@
+---
+# Match netbsd-nginx / playbook Python so certbot and site-packages paths align.
+python_version_major: "3"
+python_version_minor: "12"
+python_version_full: "{{ python_version_major }}.{{ python_version_minor }}"
+python_version_short: "{{ python_version_major }}{{ python_version_minor }}"
+python_site_packages: "/usr/pkg/lib/python{{ python_version_major }}.{{ python_version_minor }}/site-packages"
+pkgsrc_tree: /usr/pkgsrc
+
+ssl_email: "hostmaster@kakwalab.ovh"
+ssl_staging: false
+certbot_binary: "/usr/pkg/bin/certbot-{{ python_version_full }}"
+
+letsencrypt_dns_ovh_enabled: true
+letsencrypt_dns_ovh_install_method: copy
+letsencrypt_dns_ovh_copy_src: dns_ovh.py
+letsencrypt_dns_ovh_copy_provide_entry_points: true
+letsencrypt_dns_ovh_copy_distinfo_version: "0.0.1"
+letsencrypt_dns_ovh_pkgsrc_path: "{{ pkgsrc_tree }}/security/py-certbot-dns-ovh"
+letsencrypt_dns_ovh_pkgsrc_creates: "{{ python_site_packages }}/certbot_dns_ovh/dns_ovh.py"
+letsencrypt_dns_ovh_propagation_seconds: 90
+letsencrypt_dns_ovh_certbot_extra_args: ""
+letsencrypt_dns_ovh_certificates:
+  - domains:
+      - "kakwalab.dev"
+      - "*.kakwalab.dev"

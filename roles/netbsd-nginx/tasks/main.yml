@@ -41,7 +41,6 @@
   ansible.builtin.include_tasks: setup_reverse_proxies.yml
   tags:
     - nginx-vhost
-    - nginx-reverse-proxy-kakwalab-dev
 
 - name: Include static website setup tasks
   include_tasks: setup_static.yml

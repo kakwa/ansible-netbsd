@@ -1,0 +1,24 @@
+---
+# OVH DNS-01 + label-based wildcard gateway vhosts. Requires netbsd-nginx earlier in the play
+# (sites-available path, self-signed fallback certs, nginx service).
+
+- name: Include Let's Encrypt OVH DNS-01 certbot tasks
+  ansible.builtin.include_tasks: certbot_ovh_dns.yml
+  when: letsencrypt_dns_ovh_enabled | default(true) | bool
+  tags:
+    - nginx-certbot
+    - certbot
+    - kakwalab-dev-reverse-certbot
+
+- name: Detect Let's Encrypt certificates for wildcard vhost SSL paths
+  ansible.builtin.include_tasks: detect_le_certificates.yml
+  tags:
+    - nginx-vhost
+    - kakwalab-dev-reverse-vhost
+
+- name: Include wildcard gateway reverse proxy sites
+  ansible.builtin.include_tasks: wildcard_reverse_proxy_sites.yml
+  tags:
+    - nginx-vhost
+    - nginx-reverse-proxy-kakwalab-dev
+    - kakwalab-dev-reverse-vhost

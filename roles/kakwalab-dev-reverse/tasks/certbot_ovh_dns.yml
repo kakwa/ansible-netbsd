@@ -129,7 +129,7 @@
         dest: "{{ python_site_packages }}/certbot_dns_ovh-{{ letsencrypt_dns_ovh_copy_distinfo_version }}.dist-info/WHEEL"
         content: |
           Wheel-Version: 1.0
-          Generator: ansible-netbsd (netbsd-nginx role)
+          Generator: ansible-netbsd (kakwalab-dev-reverse role)
           Root-Is-Purelib: true
           Tag: py3-none-any
         owner: root

@@ -1,0 +1,7 @@
+---
+# Same as netbsd-nginx so tagged runs of only this role still reload the daemon.
+- name: reload nginx
+  ansible.builtin.service:
+    name: nginx
+    state: reloaded
+  become: true
