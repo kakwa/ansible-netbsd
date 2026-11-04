@@ -126,6 +126,12 @@ server {
         proxy_set_header X-Forwarded-Proto $scheme;
         proxy_set_header X-Forwarded-Host $host;
         proxy_set_header X-Forwarded-Port $server_port;
+{% if item.upstream_api_key is defined %}
+
+        # Authenticate to the backend service with the configured API key
+        # (replaces any Authorization header sent by the client)
+        proxy_set_header Authorization "Bearer {{ item.upstream_api_key }}";
+{% endif %}
 
         # SSL verification settings for HTTPS backends
 {% if upstream_proto == 'https' and not (item.ssl_verify | default(reverse_proxy_defaults.ssl_verify | default(true))) %}
@@ -169,6 +175,12 @@ server {
         proxy_set_header X-Forwarded-Proto $scheme;
         proxy_set_header X-Forwarded-Host $host;
         proxy_set_header X-Forwarded-Port $server_port;
+{% if item.upstream_api_key is defined %}
+
+        # Authenticate to the backend service with the configured API key
+        # (replaces any Authorization header sent by the client)
+        proxy_set_header Authorization "Bearer {{ item.upstream_api_key }}";
+{% endif %}
 
         # SSL verification settings for HTTPS backends
 {% if item.upstream.startswith('https://') and not (item.ssl_verify | default(reverse_proxy_defaults.ssl_verify | default(true))) %}

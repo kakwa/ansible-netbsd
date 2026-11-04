@@ -92,6 +92,19 @@
             # API key auth: clients must send "Authorization: Bearer <api_key>"
             api_key_auth_enabled: true
             api_key: "{{ vault_ai_api_key | default(lookup('password', './ai.apikey.txt chars=ascii_letters,digits length=32')) }}"
+          - name: "chat"
+            domain: "chat.kakwalab.ovh"
+            upstream: "https://ai.local/"
+            ssl_verify: false
+            # Chat UI served by the AI service; streaming (SSE) support
+            streaming: true
+            # Backend (ai.local) API key: sent as "Authorization: Bearer <key>"
+            # when proxying; clients only need Basic auth
+            upstream_api_key: "{{ vault_ai_api_key | default(lookup('password', './ai.apikey.txt chars=ascii_letters,digits length=32')) }}"
+            # Basic auth (same credentials as the other vhosts)
+            auth_enabled: true
+            auth_user: "kakwa"
+            auth_password: "{{ vault_proxy_password | default(lookup('password', './proxy.password.txt chars=ascii_letters,digits length=16')) }}"
     - role: kakwalab-dev-reverse
       tags: ["service", "netbsd-nginx", "kakwalab-dev-reverse"]
       vars:
