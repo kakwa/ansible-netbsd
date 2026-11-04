@@ -83,6 +83,15 @@
             auth_enabled: true
             auth_user: "kakwa"
             auth_password: "{{ vault_proxy_password | default(lookup('password', './proxy.password.txt chars=ascii_letters,digits length=16')) }}"
+          - name: "ai"
+            domain: "ai.kakwalab.ovh"
+            upstream: "https://ai.local/"
+            ssl_verify: false
+            # Streaming (SSE) support for OpenAI-compatible API responses
+            streaming: true
+            # API key auth: clients must send "Authorization: Bearer <api_key>"
+            api_key_auth_enabled: true
+            api_key: "{{ vault_ai_api_key | default(lookup('password', './ai.apikey.txt chars=ascii_letters,digits length=32')) }}"
     - role: kakwalab-dev-reverse
       tags: ["service", "netbsd-nginx", "kakwalab-dev-reverse"]
       vars:

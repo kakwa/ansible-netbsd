@@ -81,12 +81,12 @@ ansible-playbook -i inventory -u $LOGIN_USER netbsd.yml
 
 ## Secrets
 
-By default, the main playbook will auto-generate passwords & secret and store in `*.password.txt` files:
+By default, the main playbook will auto-generate passwords & secrets and store them in `*.password.txt` / `*.apikey.txt` files:
 
 ```bash
-ls *.password.txt
+ls *.password.txt *.apikey.txt
 
-cat *.password.txt
+cat *.password.txt *.apikey.txt
 ```
 
 Values can be overriden, or you could setup [ansible-vault](https://docs.ansible.com/ansible/latest/vault_guide/index.html) to more cleanly manage them.

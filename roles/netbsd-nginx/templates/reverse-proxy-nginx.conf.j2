@@ -86,6 +86,20 @@ server {
     auth_basic_user_file /usr/pkg/etc/nginx/.htpasswd.{{ item.name }};
 {% endif %}
 
+    # API key authentication (OpenAI-compatible: Authorization: Bearer <key>)
+{% if item.api_key_auth_enabled | default(false) %}
+    # default_type only affects responses nginx generates itself (like the 401
+    # below); proxied responses keep the Content-Type from the upstream.
+    default_type application/json;
+    set $api_key_ok 0;
+    if ($http_authorization = "Bearer {{ item.api_key }}") {
+        set $api_key_ok 1;
+    }
+    if ($api_key_ok != 1) {
+        return 401 '{"error": {"message": "Invalid or missing API key", "type": "invalid_api_key", "param": null, "code": null}}';
+    }
+{% endif %}
+
     # Proxy settings
     location / {
 
@@ -124,9 +138,9 @@ server {
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection $connection_upgrade;
 
-        # Timeouts - extended for WebSocket connections if websocket_path is defined
+        # Timeouts - extended for WebSocket/streaming connections if websocket_path or streaming is defined
         proxy_connect_timeout 60s;
-{% if item.websocket_path is defined %}
+{% if item.websocket_path is defined or item.streaming | default(false) %}
         proxy_send_timeout 3600s;  # 1 hour for WebSocket
         proxy_read_timeout 3600s;  # 1 hour for WebSocket
 {% else %}
@@ -138,7 +152,7 @@ server {
         proxy_next_upstream error timeout invalid_header http_500 http_502 http_503 http_504;
 
         # Buffer settings
-{% if item.websocket_path is defined %}
+{% if item.websocket_path is defined or item.streaming | default(false) %}
         proxy_buffering off;  # Disable buffering for WebSocket
 {% else %}
         proxy_buffering on;
@@ -167,9 +181,9 @@ server {
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection $connection_upgrade;
 
-        # Timeouts - extended for WebSocket connections if websocket_path is defined
+        # Timeouts - extended for WebSocket/streaming connections if websocket_path or streaming is defined
         proxy_connect_timeout 60s;
-{% if item.websocket_path is defined %}
+{% if item.websocket_path is defined or item.streaming | default(false) %}
         proxy_send_timeout 3600s;  # 1 hour for WebSocket
         proxy_read_timeout 3600s;  # 1 hour for WebSocket
 {% else %}
@@ -181,7 +195,7 @@ server {
         proxy_next_upstream error timeout invalid_header http_500 http_502 http_503 http_504;
 
         # Buffer settings
-{% if item.websocket_path is defined %}
+{% if item.websocket_path is defined or item.streaming | default(false) %}
         proxy_buffering off;  # Disable buffering for WebSocket
 {% else %}
         proxy_buffering on;
