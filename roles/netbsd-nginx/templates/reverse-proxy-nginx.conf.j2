@@ -86,8 +86,8 @@ server {
     auth_basic_user_file /usr/pkg/etc/nginx/.htpasswd.{{ item.name }};
 {% endif %}
 
-    # API key authentication (OpenAI-compatible: Authorization: Bearer <key>)
 {% if item.api_key_auth_enabled | default(false) %}
+    # API key authentication (OpenAI-compatible: Authorization: Bearer <key>)
     # default_type only affects responses nginx generates itself (like the 401
     # below); proxied responses keep the Content-Type from the upstream.
     default_type application/json;
