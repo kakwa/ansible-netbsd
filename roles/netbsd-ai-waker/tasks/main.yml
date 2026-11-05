@@ -1,0 +1,59 @@
+---
+- name: Check ai-waker configuration
+  ansible.builtin.assert:
+    that:
+      - ai_waker_target_mac | length > 0
+    fail_msg: >-
+      ai_waker_target_mac must be set to the MAC address of the AI host NIC
+      (for example "aa:bb:cc:dd:ee:ff"), e.g. through vault_ai_wol_mac, or
+      set ai_waker_enable: false.
+    quiet: true
+  when: ai_waker_enable
+
+- name: Install packages for ai-waker support
+  community.general.pkgin:
+    name: "{{ ai_waker_packages }}"
+    state: present
+  when: ai_waker_enable
+  become: true
+
+- name: Deploy ai-waker script
+  ansible.builtin.copy:
+    src: ai-waker.py
+    dest: /usr/pkg/bin/ai-waker.py
+    owner: root
+    group: wheel
+    mode: '0755'
+  when: ai_waker_enable
+  notify: restart ai-waker
+  become: true
+
+- name: Deploy ai-waker rc.d script
+  ansible.builtin.template:
+    src: ai_waker.j2
+    dest: /etc/rc.d/ai_waker
+    owner: root
+    group: wheel
+    mode: '0755'
+  when: ai_waker_enable
+  notify: restart ai-waker
+  become: true
+
+- name: Enable ai-waker in rc.conf
+  ansible.builtin.lineinfile:
+    path: /etc/rc.conf
+    line: 'ai_waker_enable=YES'
+    regexp: '^ai_waker_enable='
+    state: present
+    backup: yes
+  notify: restart ai-waker
+  when: ai_waker_enable
+  become: true
+
+- name: Start and enable ai-waker service
+  ansible.builtin.service:
+    name: ai_waker
+    state: started
+    enabled: true
+  when: ai_waker_enable
+  become: true

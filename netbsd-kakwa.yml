@@ -37,6 +37,11 @@
       vars:
         mdns_enable_unbound_forwarder: true
         mdns_dns_forwarders: ["192.168.1.25"]
+    - role: netbsd-ai-waker
+      tags: ["service", "netbsd-ai-waker"]
+      vars:
+        # MAC address of ai.local's NIC (required to send the magic packet).
+        ai_waker_target_mac: "{{ vault_ai_wol_mac | default('') }}"
     - role: netbsd-nginx
       tags: ["service", "netbsd-nginx"]
       vars:
@@ -87,6 +92,8 @@
             domain: "ai.kakwalab.ovh"
             upstream: "https://ai.local/"
             ssl_verify: false
+            # Wake ai.local through netbsd-ai-waker before proxying
+            wake_enabled: true
             # Streaming (SSE) support for OpenAI-compatible API responses
             streaming: true
             # API key auth: clients must send "Authorization: Bearer <api_key>"
@@ -96,6 +103,8 @@
             domain: "chat.kakwalab.ovh"
             upstream: "https://ai.local/"
             ssl_verify: false
+            # Wake ai.local through netbsd-ai-waker before proxying
+            wake_enabled: true
             # Chat UI served by the AI service; streaming (SSE) support
             streaming: true
             # Backend (ai.local) API key: sent as "Authorization: Bearer <key>"

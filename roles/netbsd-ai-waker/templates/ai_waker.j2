@@ -1,0 +1,107 @@
+#!/bin/sh
+#
+# {{ ansible_managed }}
+# PROVIDE: ai_waker
+# REQUIRE: NETWORKING
+# BEFORE: nginx
+# KEYWORD: shutdown
+#
+# Add the following to /etc/rc.conf to enable ai_waker:
+#
+# ai_waker_enable="YES"
+#
+
+. /etc/rc.subr
+
+name="ai_waker"
+rcvar="${name}_enable"
+command="/usr/pkg/bin/ai-waker.py"
+pidfile="{{ ai_waker_pid_file }}"
+start_cmd="ai_waker_start"
+stop_cmd="ai_waker_stop"
+status_cmd="ai_waker_status"
+
+# Default configuration
+ai_waker_enable=${ai_waker_enable-"NO"}
+ai_waker_user="{{ ai_waker_user }}"
+ai_waker_group="{{ ai_waker_group }}"
+ai_waker_pidfile="{{ ai_waker_pid_file }}"
+
+ai_waker_start()
+{
+    echo "Starting ${name}."
+
+    # Ensure the PID directory exists
+    piddir=$(dirname "${ai_waker_pidfile}")
+    if [ ! -d "${piddir}" ]; then
+        mkdir -p "${piddir}"
+        chown "${ai_waker_user}:${ai_waker_group}" "${piddir}"
+    fi
+
+    # Start the daemon
+    su -m "${ai_waker_user}" -c "${command} --daemon \
+        --pid-file '${ai_waker_pidfile}' \
+        --listen-addr '{{ ai_waker_listen_addr }}' \
+        --listen-port '{{ ai_waker_listen_port }}' \
+        --target-host '{{ ai_waker_target_host }}' \
+        --target-ip '{{ ai_waker_target_ip }}' \
+        --mac '{{ ai_waker_target_mac }}' \
+        --check-port '{{ ai_waker_check_port }}' \
+        --broadcast '{{ ai_waker_broadcast }}' \
+        --wol-port '{{ ai_waker_wol_port }}' \
+        --wake-timeout '{{ ai_waker_wake_timeout }}' \
+        --poll-interval '{{ ai_waker_wake_poll_interval }}'"
+
+    # Verify it started
+    sleep 1
+    if [ -f "${ai_waker_pidfile}" ]; then
+        echo "${name} started successfully."
+    else
+        echo "Failed to start ${name}."
+        return 1
+    fi
+}
+
+ai_waker_stop()
+{
+    if [ -f "${ai_waker_pidfile}" ]; then
+        pid=$(cat "${ai_waker_pidfile}")
+        echo "Stopping ${name} (PID: ${pid})."
+        kill -TERM "${pid}"
+
+        # Wait for process to stop
+        timeout=10
+        while [ ${timeout} -gt 0 ] && kill -0 "${pid}" 2>/dev/null; do
+            sleep 1
+            timeout=$((timeout - 1))
+        done
+
+        if kill -0 "${pid}" 2>/dev/null; then
+            echo "Process ${pid} did not stop, forcing termination."
+            kill -KILL "${pid}"
+        fi
+
+        echo "${name} stopped."
+    else
+        echo "${name} is not running."
+    fi
+}
+
+ai_waker_status()
+{
+    if [ -f "${ai_waker_pidfile}" ]; then
+        pid=$(cat "${ai_waker_pidfile}")
+        if kill -0 "${pid}" 2>/dev/null; then
+            echo "${name} is running (PID: ${pid})."
+        else
+            echo "${name} is not running (stale PID file)."
+            return 1
+        fi
+    else
+        echo "${name} is not running."
+        return 1
+    fi
+}
+
+load_rc_config $name
+run_rc_command "$1"

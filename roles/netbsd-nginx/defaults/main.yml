@@ -38,6 +38,13 @@ reverse_proxies: []
 reverse_proxy_defaults:
   ssl_verify: true  # Set to false to disable SSL certificate verification for HTTPS backends
 
+# Optional on-demand wake hook (used with the netbsd-ai-waker role).
+# Set "wake_enabled: true" on a reverse_proxies entry to call this endpoint
+# from an auth_request subrequest before proxying. The request is delayed
+# until the endpoint returns 2xx (host awake) or fails.
+nginx_ai_waker_url: "http://127.0.0.1:8099/wake"
+nginx_ai_waker_timeout: 120  # seconds
+
 # Nginx configuration
 nginx_worker_processes: "auto"
 nginx_worker_connections: 1024

@@ -102,6 +102,10 @@ server {
 
     # Proxy settings
     location / {
+{% if item.wake_enabled | default(false) %}
+        # Ask ai-waker to wake the backend before proxying (netbsd-ai-waker)
+        auth_request /_ai_wake;
+{% endif %}
 
 {% if nginx_dns_resolvers is defined and nginx_dns_resolvers | length > 0 %}
         # Extract path from upstream URL for proxy_pass when using upstream blocks
@@ -218,6 +222,21 @@ server {
 {% endif %}
     }
 
+{% if item.wake_enabled | default(false) %}
+    # Internal subrequest: wake the backend and wait for it to answer.
+    location = /_ai_wake {
+        internal;
+        auth_basic off;
+        proxy_pass {{ item.wake_url | default(nginx_ai_waker_url) }};
+        proxy_pass_request_body off;
+        proxy_set_header Content-Length "";
+        proxy_set_header X-Original-URI $request_uri;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_connect_timeout 5s;
+        proxy_read_timeout {{ item.wake_timeout | default(nginx_ai_waker_timeout) }}s;
+    }
+
+{% endif %}
     # Health check endpoint (optional)
     location /health {
         access_log off;
