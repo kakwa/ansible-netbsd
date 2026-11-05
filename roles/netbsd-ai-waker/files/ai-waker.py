@@ -234,9 +234,6 @@ def main():
         _use_syslog = True
         syslog.openlog("ai-waker")
 
-    if cfg.pid_file:
-        write_pid_file(cfg.pid_file)
-
     def handle_signal(signum, _frame):
         log("received signal %d, shutting down" % signum)
         _shutdown.set()
@@ -245,6 +242,9 @@ def main():
     signal.signal(signal.SIGINT, handle_signal)
 
     server = WakeServer((cfg.listen_addr, cfg.listen_port), Handler, cfg)
+    if cfg.pid_file:
+        write_pid_file(cfg.pid_file)
+
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
     log(
