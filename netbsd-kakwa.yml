@@ -61,7 +61,7 @@
       vars:
         # Target host and MAC address of its NIC (required to send the magic packet).
         waker_target_host: "ai.local"
-        waker_target_mac: "{{ vault_ai_wol_mac | default('') }}"
+        waker_target_mac: "A0:36:9F:5B:38:02"
     - role: netbsd-nginx
       tags: ["service", "netbsd-nginx"]
       vars:
