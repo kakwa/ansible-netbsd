@@ -1,5 +1,5 @@
 #!/usr/pkg/bin/python3.12
-"""ai-waker: on-demand Wake-on-LAN helper for the AI host.
+"""waker: on-demand Wake-on-LAN helper for a target host.
 
 Small HTTP service consumed by nginx through an ``auth_request``
 subrequest. A request to ``/wake`` returns immediately when the target TCP
@@ -20,7 +20,7 @@ import threading
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
-DEFAULT_PID_FILE = "/var/run/ai-waker.pid"
+DEFAULT_PID_FILE = "/var/run/waker.pid"
 
 _shutdown = threading.Event()
 _use_syslog = False
@@ -94,7 +94,7 @@ def wait_until_up(host, port, timeout, poll_interval):
 
 class Handler(BaseHTTPRequestHandler):
     protocol_version = "HTTP/1.1"
-    server_version = "ai-waker/1.0"
+    server_version = "waker/1.0"
 
     def log_message(self, fmt, *args):
         # nginx calls this endpoint on every proxied request, so keep the
@@ -125,7 +125,7 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/health":
             self._reply(200, "ok\n", head=head)
             return
-        if path not in ("/wake", "/_ai_wake", "/"):
+        if path not in ("/wake", "/_wake", "/"):
             self._reply(404, "not found\n", head=head)
             return
 
@@ -202,12 +202,12 @@ def daemonize():
 
 
 def build_parser():
-    parser = argparse.ArgumentParser(description="AI host Wake-on-LAN helper")
+    parser = argparse.ArgumentParser(description="Wake-on-LAN helper")
     parser.add_argument("--daemon", action="store_true", help="run in background")
     parser.add_argument("--pid-file", default=DEFAULT_PID_FILE)
     parser.add_argument("--listen-addr", default="127.0.0.1")
     parser.add_argument("--listen-port", type=int, default=8099)
-    parser.add_argument("--target-host", default="ai.local")
+    parser.add_argument("--target-host", default="target.local")
     parser.add_argument("--target-ip", default="")
     parser.add_argument("--mac", default="", help="target MAC address")
     parser.add_argument("--check-port", type=int, default=443)
@@ -232,7 +232,7 @@ def main():
     if cfg.daemon:
         daemonize()
         _use_syslog = True
-        syslog.openlog("ai-waker")
+        syslog.openlog("waker")
 
     def handle_signal(signum, _frame):
         log("received signal %d, shutting down" % signum)

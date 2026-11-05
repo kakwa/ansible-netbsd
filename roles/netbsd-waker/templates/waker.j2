@@ -1,0 +1,107 @@
+#!/bin/sh
+#
+# {{ ansible_managed }}
+# PROVIDE: waker
+# REQUIRE: NETWORKING
+# BEFORE: nginx
+# KEYWORD: shutdown
+#
+# Add the following to /etc/rc.conf to enable waker:
+#
+# waker_enable="YES"
+#
+
+. /etc/rc.subr
+
+name="waker"
+rcvar="${name}_enable"
+command="/usr/pkg/bin/wol-waker.py"
+pidfile="{{ waker_pid_file }}"
+start_cmd="waker_start"
+stop_cmd="waker_stop"
+status_cmd="waker_status"
+
+# Default configuration
+waker_enable=${waker_enable-"NO"}
+waker_user="{{ waker_user }}"
+waker_group="{{ waker_group }}"
+waker_pidfile="{{ waker_pid_file }}"
+
+waker_start()
+{
+    echo "Starting ${name}."
+
+    # Ensure the PID directory exists
+    piddir=$(dirname "${waker_pidfile}")
+    if [ ! -d "${piddir}" ]; then
+        mkdir -p "${piddir}"
+        chown "${waker_user}:${waker_group}" "${piddir}"
+    fi
+
+    # Start the daemon
+    su -m "${waker_user}" -c "${command} --daemon \
+        --pid-file '${waker_pidfile}' \
+        --listen-addr '{{ waker_listen_addr }}' \
+        --listen-port '{{ waker_listen_port }}' \
+        --target-host '{{ waker_target_host }}' \
+        --target-ip '{{ waker_target_ip }}' \
+        --mac '{{ waker_target_mac }}' \
+        --check-port '{{ waker_check_port }}' \
+        --broadcast '{{ waker_broadcast }}' \
+        --wol-port '{{ waker_wol_port }}' \
+        --wake-timeout '{{ waker_wake_timeout }}' \
+        --poll-interval '{{ waker_wake_poll_interval }}'"
+
+    # Verify it started
+    sleep 1
+    if [ -f "${waker_pidfile}" ]; then
+        echo "${name} started successfully."
+    else
+        echo "Failed to start ${name}."
+        return 1
+    fi
+}
+
+waker_stop()
+{
+    if [ -f "${waker_pidfile}" ]; then
+        pid=$(cat "${waker_pidfile}")
+        echo "Stopping ${name} (PID: ${pid})."
+        kill -TERM "${pid}"
+
+        # Wait for process to stop
+        timeout=10
+        while [ ${timeout} -gt 0 ] && kill -0 "${pid}" 2>/dev/null; do
+            sleep 1
+            timeout=$((timeout - 1))
+        done
+
+        if kill -0 "${pid}" 2>/dev/null; then
+            echo "Process ${pid} did not stop, forcing termination."
+            kill -KILL "${pid}"
+        fi
+
+        echo "${name} stopped."
+    else
+        echo "${name} is not running."
+    fi
+}
+
+waker_status()
+{
+    if [ -f "${waker_pidfile}" ]; then
+        pid=$(cat "${waker_pidfile}")
+        if kill -0 "${pid}" 2>/dev/null; then
+            echo "${name} is running (PID: ${pid})."
+        else
+            echo "${name} is not running (stale PID file)."
+            return 1
+        fi
+    else
+        echo "${name} is not running."
+        return 1
+    fi
+}
+
+load_rc_config $name
+run_rc_command "$1"

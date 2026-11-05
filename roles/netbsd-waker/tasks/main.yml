@@ -1,0 +1,59 @@
+---
+- name: Check waker configuration
+  ansible.builtin.assert:
+    that:
+      - waker_target_mac | length > 0
+    fail_msg: >-
+      waker_target_mac must be set to the MAC address of the target host NIC
+      (for example "aa:bb:cc:dd:ee:ff"), e.g. through vault_wol_mac, or
+      set waker_enable: false.
+    quiet: true
+  when: waker_enable
+
+- name: Install packages for waker support
+  community.general.pkgin:
+    name: "{{ waker_packages }}"
+    state: present
+  when: waker_enable
+  become: true
+
+- name: Deploy waker script
+  ansible.builtin.copy:
+    src: wol-waker.py
+    dest: /usr/pkg/bin/wol-waker.py
+    owner: root
+    group: wheel
+    mode: '0755'
+  when: waker_enable
+  notify: restart waker
+  become: true
+
+- name: Deploy waker rc.d script
+  ansible.builtin.template:
+    src: waker.j2
+    dest: /etc/rc.d/waker
+    owner: root
+    group: wheel
+    mode: '0755'
+  when: waker_enable
+  notify: restart waker
+  become: true
+
+- name: Enable waker in rc.conf
+  ansible.builtin.lineinfile:
+    path: /etc/rc.conf
+    line: 'waker_enable=YES'
+    regexp: '^waker_enable='
+    state: present
+    backup: yes
+  notify: restart waker
+  when: waker_enable
+  become: true
+
+- name: Start and enable waker service
+  ansible.builtin.service:
+    name: waker
+    state: started
+    enabled: true
+  when: waker_enable
+  become: true

@@ -22,8 +22,8 @@
     - { role: netbsd-python, tags: ["system", "netbsd-python"] }
     - { role: netbsd-misc-packages, tags: ["system", "netbsd-misc-packages"] }
     - { role: netbsd-misc, tags: ["system", "netbsd-misc"] }
-#    - { role: netbsd-ai-waker, tags: ["service", "netbsd-ai-waker"] }
-#      requires ai_waker_target_mac (MAC of the AI host NIC)
+#    - { role: netbsd-waker, tags: ["service", "netbsd-waker"] }
+#      requires waker_target_mac (MAC of the target host NIC)
     - role: netbsd-nginx
       tags: ["service", "netbsd-nginx"]
       vars:

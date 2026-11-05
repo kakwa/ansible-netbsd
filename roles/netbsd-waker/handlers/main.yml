@@ -1,6 +1,6 @@
 ---
-- name: restart ai-waker
+- name: restart waker
   ansible.builtin.service:
-    name: ai_waker
+    name: waker
     state: restarted
   become: true
