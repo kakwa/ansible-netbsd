@@ -27,8 +27,7 @@
 
 - name: Collect all domains for certificate request
   set_fact:
-    all_domains: "{{ ([ttrss_domain] if ttrss_domain is defined else []) +
-                     (static_sites | map(attribute='domain') | list) +
+    all_domains: "{{ (static_sites | map(attribute='domain') | list) +
                      (reverse_proxies | map(attribute='domain') | list | select('match', '^[^*].*$') | list) }}"
   tags:
     - nginx-certbot

@@ -32,6 +32,25 @@
     - { role: zsh, tags: ["system", "zsh"] }
     - { role: netbsd-misc-packages, tags: ["system", "netbsd-misc-packages"] }
     - { role: netbsd-misc, tags: ["system", "netbsd-misc"] }
+    - role: netbsd-logrotate
+      tags: ["system", "netbsd-logrotate"]
+      vars:
+        logrotate_configs:
+          - name: nginx
+            paths:
+              - /var/log/nginx/*.log
+            options:
+              - daily
+              - rotate 14
+              - compress
+              - delaycompress
+              - notifempty
+              - missingok
+              - sharedscripts
+            postrotate: |
+              if [ -f /var/run/nginx.pid ]; then
+                kill -USR1 $(cat /var/run/nginx.pid)
+              fi
     - role: netbsd-mdns
       tags: ["system", "netbsd-mdns"]
       vars:
