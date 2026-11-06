@@ -122,10 +122,21 @@ class Handler(BaseHTTPRequestHandler):
 
     def _handle(self, head=False):
         path = self.path.split("?", 1)[0]
+        client = self.client_address[0] if self.client_address else "-"
+        original_uri = self.headers.get("X-Original-URI") or "-"
+        real_ip = self.headers.get("X-Real-IP") or "-"
+        # Log every request so we can confirm nginx is reaching this endpoint
+        # through its auth_request subrequest, and from which vhost/client.
+        log(
+            "request %s %s from %s (x-original-uri=%s x-real-ip=%s)"
+            % (self.command, self.path, client, original_uri, real_ip)
+        )
+
         if path == "/health":
             self._reply(200, "ok\n", head=head)
             return
         if path not in ("/wake", "/_wake", "/"):
+            log("unknown path %s" % path, syslog.LOG_DEBUG)
             self._reply(404, "not found\n", head=head)
             return
 
@@ -133,10 +144,18 @@ class Handler(BaseHTTPRequestHandler):
         check_host = cfg.target_ip or cfg.target_host
 
         if is_up(check_host, cfg.check_port):
+            log(
+                "target %s already up (check %s:%s)"
+                % (cfg.target_host, check_host, cfg.check_port),
+                syslog.LOG_DEBUG,
+            )
             self._reply(200, "already up\n", head=head)
             return
 
-        log("target %s is down, sending magic packet" % cfg.target_host)
+        log(
+            "target %s down (check %s:%s), sending magic packet"
+            % (cfg.target_host, check_host, cfg.check_port)
+        )
         try:
             send_magic_packet(
                 cfg.mac, cfg.broadcast, cfg.wol_port, cfg.target_ip

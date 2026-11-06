@@ -81,12 +81,14 @@ server {
     error_log /var/log/nginx/{{ item.name }}_error.log;
 
     # Basic authentication
-{% if item.auth_enabled | default(false) %}
+    # When wake_enabled, auth checks are moved into the /_wake subrequest
+    # location so auth_request (ACCESS phase) fires before any 401 is sent.
+{% if item.auth_enabled | default(false) and not item.wake_enabled | default(false) %}
     auth_basic "Restricted Access";
     auth_basic_user_file /usr/pkg/etc/nginx/.htpasswd.{{ item.name }};
 {% endif %}
 
-{% if item.api_key_auth_enabled | default(false) %}
+{% if item.api_key_auth_enabled | default(false) and not item.wake_enabled | default(false) %}
     # API key authentication (OpenAI-compatible: Authorization: Bearer <key>)
     # default_type only affects responses nginx generates itself (like the 401
     # below); proxied responses keep the Content-Type from the upstream.
@@ -102,6 +104,12 @@ server {
 
     # Proxy settings
     location / {
+{% if item.wake_enabled | default(false) and item.auth_enabled | default(false) %}
+        # Basic auth in PREACCESS phase — runs AFTER auth_request (ACCESS phase),
+        # so the waker is consulted before credentials are validated.
+        auth_basic "Restricted Access";
+        auth_basic_user_file /usr/pkg/etc/nginx/.htpasswd.{{ item.name }};
+{% endif %}
 {% if item.wake_enabled | default(false) %}
         # Ask waker to wake the backend before proxying (netbsd-waker)
         auth_request /_wake;
@@ -223,10 +231,22 @@ server {
     }
 
 {% if item.wake_enabled | default(false) %}
-    # Internal subrequest: wake the backend and wait for it to answer.
+    # Internal subrequest: wake the backend via the waker service.
+    # API-key auth (if/return) works here because REWRITE phase runs in
+    # subrequests. Basic auth (auth_basic) is placed in location / instead
+    # because PREACCESS phase is skipped in subrequests.
     location = /_wake {
         internal;
-        auth_basic off;
+{% if item.api_key_auth_enabled | default(false) %}
+        default_type application/json;
+        set $api_key_ok 0;
+        if ($http_authorization = "Bearer {{ item.api_key }}") {
+            set $api_key_ok 1;
+        }
+        if ($api_key_ok != 1) {
+            return 401 '{"error": {"message": "Invalid or missing API key", "type": "invalid_api_key", "param": null, "code": null}}';
+        }
+{% endif %}
         proxy_pass {{ item.wake_url | default(nginx_waker_url) }};
         proxy_pass_request_body off;
         proxy_set_header Content-Length "";
