@@ -25,6 +25,16 @@ before `proxy_pass`. nginx calls the waker for every request:
   unicast copy to `waker_target_ip`) and waits up to `waker_wake_timeout`
   seconds for the host to answer before nginx continues.
 
+The waker must not gate on the HTTP method: nginx issues `auth_request`
+subrequests as `GET` even when the original request was a `POST`, so a
+"post-only" check would silently skip every wake. Static PWA assets are served
+by nginx directly and never reach the waker; API paths always wake the host.
+
+If the magic packet arrives while the target is still entering suspend, the
+kernel may consume it as a pending wakeup, abort the freeze, and re-enter
+suspend. The waker therefore resends the packet every
+`waker_wol_retry_interval` seconds until the host answers.
+
 ## Role Variables
 
 Variables (see `defaults/main.yml`):
@@ -40,6 +50,7 @@ Variables (see `defaults/main.yml`):
 | `waker_wol_port` | `9` | Magic packet UDP port |
 | `waker_wake_timeout` | `90` | Seconds to wait for the host to wake |
 | `waker_wake_poll_interval` | `2` | Poll interval while waking |
+| `waker_wol_retry_interval` | `5` | Resend the magic packet this often while waiting (`0` = once) |
 | `waker_listen_addr` | `127.0.0.1` | Local listen address |
 | `waker_listen_port` | `8099` | Local listen port |
 

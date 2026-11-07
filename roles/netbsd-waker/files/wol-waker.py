@@ -79,12 +79,27 @@ def send_magic_packet(mac, broadcast, wol_port, target_ip=None, repeat=3):
         sock.close()
 
 
-def wait_until_up(host, port, timeout, poll_interval):
-    """Poll host:port until it answers or timeout expires."""
-    deadline = time.monotonic() + timeout
-    while time.monotonic() < deadline:
+def wait_until_up(host, port, timeout, poll_interval, retry=None,
+                  retry_interval=0.0):
+    """Poll host:port until it answers or timeout expires.
+
+    ``retry`` is called every ``retry_interval`` seconds while waiting. It is
+    used to resend the magic packet: a packet that arrives while the target is
+    still entering suspend can be consumed as a pending wakeup, after which the
+    kernel aborts the freeze and immediately re-enters suspend.
+    """
+    start = time.monotonic()
+    deadline = start + timeout
+    next_retry = start + retry_interval if retry and retry_interval > 0 else None
+    while True:
         if is_up(host, port):
             return True
+        now = time.monotonic()
+        if now >= deadline:
+            break
+        if next_retry is not None and now >= next_retry:
+            retry()
+            next_retry = now + retry_interval
         remaining = deadline - time.monotonic()
         if remaining <= 0:
             break
@@ -143,6 +158,10 @@ class Handler(BaseHTTPRequestHandler):
         cfg = self.server.config
         check_host = cfg.target_ip or cfg.target_host
 
+        # Do not gate on self.command: nginx issues auth_request subrequests
+        # as GET even when the original request was a POST, so a "post-only"
+        # check would skip every wake. Static PWA assets are served by
+        # nginx directly and never reach this endpoint.
         if is_up(check_host, cfg.check_port):
             log(
                 "target %s already up (check %s:%s)"
@@ -165,8 +184,26 @@ class Handler(BaseHTTPRequestHandler):
             self._reply(500, "failed to send magic packet: %s\n" % exc, head=head)
             return
 
+        def resend():
+            log(
+                "target %s still down, resending magic packet"
+                % cfg.target_host,
+                syslog.LOG_DEBUG,
+            )
+            try:
+                send_magic_packet(
+                    cfg.mac, cfg.broadcast, cfg.wol_port, cfg.target_ip
+                )
+            except (OSError, ValueError) as exc:
+                log("failed to resend magic packet: %s" % exc, syslog.LOG_ERR)
+
         if wait_until_up(
-            check_host, cfg.check_port, cfg.wake_timeout, cfg.poll_interval
+            check_host,
+            cfg.check_port,
+            cfg.wake_timeout,
+            cfg.poll_interval,
+            retry=resend,
+            retry_interval=cfg.wol_retry_interval,
         ):
             log("target %s is up" % cfg.target_host)
             self._reply(200, "awake\n", head=head)
@@ -234,6 +271,12 @@ def build_parser():
     parser.add_argument("--wol-port", type=int, default=9)
     parser.add_argument("--wake-timeout", type=float, default=90)
     parser.add_argument("--poll-interval", type=float, default=2)
+    parser.add_argument(
+        "--wol-retry-interval",
+        type=float,
+        default=5.0,
+        help="resend the magic packet this often while waiting (0 disables)",
+    )
     return parser
 
 

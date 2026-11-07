@@ -1,0 +1,10 @@
+{
+    "bridge_ip": "{{ hue_bridge_ip }}",
+    "client_key": "{{ hue_client_key }}",
+    "restart_delay": {{ hue_restart_delay }},
+    "plugs": [
+{%- for plug in hue_plugs %}
+        {"id": "{{ plug.id }}", "name": "{{ plug.name }}"}{% if not loop.last %},{% endif %}
+{%- endfor %}
+    ]
+}

@@ -1,0 +1,12 @@
+---
+galaxy_info:
+  role_name: netbsd_hue_plugs
+  author: ansible-netbsd
+  description: CLI tool to power on/off/restart devices behind Philips Hue smart plugs on NetBSD.
+  license: MIT
+  min_ansible_version: "2.14"
+  platforms:
+    - name: NetBSD
+      versions: all
+
+dependencies: []

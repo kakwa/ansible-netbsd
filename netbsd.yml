@@ -24,6 +24,8 @@
     - { role: netbsd-misc, tags: ["system", "netbsd-misc"] }
 #    - { role: netbsd-waker, tags: ["service", "netbsd-waker"] }
 #      requires waker_target_mac (MAC of the target host NIC)
+#    - role: netbsd-hue-plugs, tags: ["service", "netbsd-hue-plugs"]
+#      requires hue_bridge_ip, hue_client_key (secrets) and hue_plugs
     - role: netbsd-nginx
       tags: ["service", "netbsd-nginx"]
       vars:

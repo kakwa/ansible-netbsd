@@ -50,7 +50,8 @@ waker_start()
         --broadcast '{{ waker_broadcast }}' \
         --wol-port '{{ waker_wol_port }}' \
         --wake-timeout '{{ waker_wake_timeout }}' \
-        --poll-interval '{{ waker_wake_poll_interval }}'"
+        --poll-interval '{{ waker_wake_poll_interval }}' \
+        --wol-retry-interval '{{ waker_wol_retry_interval }}'"
 
     # Verify it started
     sleep 1

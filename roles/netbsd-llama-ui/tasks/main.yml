@@ -1,0 +1,61 @@
+---
+- name: Create pkgsrc overlay directory
+  file:
+    path: /usr/pkgsrc/overlay
+    state: directory
+    mode: '0755'
+  become: true
+
+- name: Copy llama.cpp-svelte-ui pkgsrc files to remote server
+  copy:
+    src: llama.cpp-svelte-ui.pkgsrc/
+    dest: /usr/pkgsrc/overlay/llama.cpp-svelte-ui/
+    owner: root
+    group: wheel
+    mode: '0644'
+    directory_mode: '0755'
+  become: true
+
+- name: Render templated Makefile with version
+  template:
+    src: Makefile.j2
+    dest: /usr/pkgsrc/overlay/llama.cpp-svelte-ui/Makefile
+    owner: root
+    group: wheel
+    mode: '0644'
+  become: true
+
+- name: Remove stale distfile (pkgsrc fetch mangles the URL)
+  file:
+    path: "/var/lib/pkgsrc/distfiles/llama.cpp-svelte-ui_{{ llama_ui_version }}-1~amk+deb15_all.deb"
+    state: absent
+  become: true
+
+- name: Download pre-built .deb to distfiles (bypass pkgsrc fetch)
+  get_url:
+    url: "{{ llama_ui_deb_url }}"
+    dest: "/var/lib/pkgsrc/distfiles/llama.cpp-svelte-ui_{{ llama_ui_version }}-1~amk+deb15_all.deb"
+    owner: root
+    group: wheel
+    mode: '0644'
+  become: true
+
+- name: Generate distinfo (checksums) for the .deb
+  command: make distinfo
+  args:
+    chdir: /usr/pkgsrc/overlay/llama.cpp-svelte-ui
+  become: true
+  environment:
+    BATCH: "1"
+
+- name: Build and install llama.cpp-svelte-ui from overlay pkgsrc
+  # No `creates:` guard: pkgsrc tracks installed versions via PKGNAME (which
+  # embeds llama_ui_version). Same version -> pkgsrc skips the install; a
+  # version bump changes PKGNAME -> pkgsrc reinstalls. A path-based `creates:`
+  # would short-circuit that version check on upgrades.
+  command: make install
+  args:
+    chdir: /usr/pkgsrc/overlay/llama.cpp-svelte-ui
+  become: true
+  environment:
+    BATCH: "1"

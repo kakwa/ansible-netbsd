@@ -1,0 +1,156 @@
+{% if nginx_dns_resolvers is defined and nginx_dns_resolvers | length > 0 %}
+# Extract hostname and port from upstream URL
+{% set upstream_url = item.upstream %}
+{% if upstream_url.startswith('http://') %}
+    {% set upstream_proto = 'http' %}
+    {% set upstream_host_port = upstream_url[7:] %}
+{% elif upstream_url.startswith('https://') %}
+    {% set upstream_proto = 'https' %}
+    {% set upstream_host_port = upstream_url[8:] %}
+{% else %}
+    {% set upstream_proto = 'http' %}
+    {% set upstream_host_port = upstream_url %}
+{% endif %}
+
+{% if '/' in upstream_host_port %}
+    {% set upstream_host_port = upstream_host_port.split('/')[0] %}
+{% endif %}
+
+{% if ':' in upstream_host_port %}
+    {% set upstream_host = upstream_host_port.split(':')[0] %}
+    {% set upstream_port = upstream_host_port.split(':')[1] %}
+{% else %}
+    {% set upstream_host = upstream_host_port %}
+    {% if upstream_proto == 'https' %}
+        {% set upstream_port = '443' %}
+    {% else %}
+        {% set upstream_port = '80' %}
+    {% endif %}
+{% endif %}
+
+# Upstream block for connection pooling
+upstream {{ item.name }}_upstream {
+    zone {{ item.name }} 256k;
+    server {{ upstream_host }}:{{ upstream_port }} resolve;
+    keepalive 32;
+}
+{% endif %}
+
+server {
+    listen 80;
+    listen [::]:80;
+    server_name {{ item.domain }};
+
+    if ($host = {{ item.domain }}) {
+        return 301 https://$host$request_uri;
+    }
+
+    return 301 https://$server_name$request_uri;
+}
+
+server {
+    listen 443 ssl;
+    listen [::]:443 ssl;
+    http2 on;
+    server_name {{ item.domain }};
+
+    # SSL configuration
+{% if item.domain in letsencrypt_available_certs %}
+    ssl_certificate /usr/pkg/etc/letsencrypt/live/{{ item.domain }}/fullchain.pem;
+    ssl_certificate_key /usr/pkg/etc/letsencrypt/live/{{ item.domain }}/privkey.pem;
+{% elif primary_letsencrypt_domain %}
+    ssl_certificate /usr/pkg/etc/letsencrypt/live/{{ primary_letsencrypt_domain }}/fullchain.pem;
+    ssl_certificate_key /usr/pkg/etc/letsencrypt/live/{{ primary_letsencrypt_domain }}/privkey.pem;
+{% else %}
+    ssl_certificate /usr/pkg/etc/nginx/ssl/selfsigned.crt;
+    ssl_certificate_key /usr/pkg/etc/nginx/ssl/selfsigned.key;
+{% endif %}
+
+    # Security headers
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header Referrer-Policy "no-referrer-when-downgrade" always;
+
+    # Logging
+    access_log /var/log/nginx/{{ item.name }}_access.log;
+    error_log /var/log/nginx/{{ item.name }}_error.log;
+
+    # Static file root (SvelteKit SPA)
+    root {{ item.static_root }};
+    index index.html;
+
+    # API proxy location (OpenAI-compatible /v1/* plus SvelteKit server endpoints)
+    location ~ ^/(v1/|props|load|unload|slots|tools) {
+{% if item.wake_enabled | default(false) and item.auth_enabled | default(false) %}
+        # Basic auth — runs before the wake subrequest
+        auth_basic "Restricted Access";
+        auth_basic_user_file /usr/pkg/etc/nginx/.htpasswd.{{ item.name }};
+{% endif %}
+{% if item.wake_enabled | default(false) %}
+        # Ask the waker to bring the backend up before proxying. Do not
+        # gate on the method: nginx runs auth_request subrequests as GET
+        # even when the original request was a POST.
+        auth_request /_wake;
+{% endif %}
+
+{% if nginx_dns_resolvers is defined and nginx_dns_resolvers | length > 0 %}
+        proxy_pass {{ upstream_proto }}://{{ item.name }}_upstream;
+{% else %}
+        proxy_pass {{ item.upstream }};
+{% endif %}
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Host $host;
+        proxy_set_header X-Forwarded-Port $server_port;
+{% if item.upstream_api_key is defined %}
+        proxy_set_header Authorization "Bearer {{ item.upstream_api_key }}";
+{% endif %}
+
+{% if upstream_proto == 'https' and not (item.ssl_verify | default(reverse_proxy_defaults.ssl_verify | default(true))) %}
+        proxy_ssl_verify off;
+        proxy_ssl_server_name off;
+{% endif %}
+
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection $connection_upgrade;
+        proxy_connect_timeout 60s;
+        proxy_send_timeout 3600s;
+        proxy_read_timeout 3600s;
+        proxy_next_upstream error timeout invalid_header http_500 http_502 http_503 http_504;
+        proxy_buffering off;
+    }
+
+{% if item.wake_enabled | default(false) %}
+    # Internal subrequest: wake the backend via the waker service
+    location = /_wake {
+        internal;
+        proxy_pass {{ item.wake_url | default(nginx_waker_url) }};
+        proxy_pass_request_body off;
+        proxy_set_header Content-Length "";
+        proxy_set_header X-Original-URI $request_uri;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_connect_timeout 5s;
+        proxy_read_timeout {{ item.wake_timeout | default(nginx_waker_timeout) }}s;
+    }
+{% endif %}
+
+    # Static SPA: serve files, fall back to index.html for client-side routing
+    location / {
+{% if item.auth_enabled | default(false) %}
+        auth_basic "Restricted Access";
+        auth_basic_user_file /usr/pkg/etc/nginx/.htpasswd.{{ item.name }};
+{% endif %}
+        try_files $uri $uri/ /index.html;
+    }
+
+    # Health check endpoint
+    location /health {
+        access_log off;
+        return 200 "healthy\n";
+        add_header Content-Type text/plain;
+    }
+}

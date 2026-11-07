@@ -1,8 +1,11 @@
 *.password.txt
 *.apikey.txt
+*.hue.conf
 ovh_dns_application_key.txt
 ovh_dns_application_secret.txt
 ovh_dns_consumer_key.txt
+hue_bridge_ip.txt
+hue_bridge_key.txt
 
 
 # Byte-compiled / optimized / DLL files

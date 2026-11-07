@@ -111,7 +111,9 @@ server {
         auth_basic_user_file /usr/pkg/etc/nginx/.htpasswd.{{ item.name }};
 {% endif %}
 {% if item.wake_enabled | default(false) %}
-        # Ask waker to wake the backend before proxying (netbsd-waker)
+        # Ask the waker to bring the backend up before proxying. Do not
+        # gate on the method: nginx runs auth_request subrequests as GET
+        # even when the original request was a POST.
         auth_request /_wake;
 {% endif %}
 

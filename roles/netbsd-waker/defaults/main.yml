@@ -27,6 +27,12 @@ waker_wol_port: 9
 waker_wake_timeout: 90
 waker_wake_poll_interval: 2
 
+# Resend the magic packet this often while waiting. A packet that arrives
+# while the target is still entering suspend is consumed as a pending wakeup
+# (the kernel aborts the freeze and re-enters suspend), so one early packet
+# is not enough. Set to 0 to send only once.
+waker_wol_retry_interval: 5
+
 # Local HTTP endpoint consumed by nginx (auth_request).
 waker_listen_addr: "127.0.0.1"
 waker_listen_port: 8099

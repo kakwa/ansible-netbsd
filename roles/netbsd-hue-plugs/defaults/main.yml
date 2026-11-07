@@ -1,0 +1,39 @@
+---
+# hue-plugs: command-line helper to power on/off/restart devices behind
+# Philips Hue smart plugs.
+#
+# Installs a small stdlib-only Python CLI (/usr/pkg/bin/hue-plugs.py) plus a
+# JSON config file that maps human-readable names to Hue light IDs. No daemon
+# or rc.d service is involved: the tool talks to the Hue bridge on demand
+# through the standard Hue HTTP API.
+hue_plugs_enable: true
+
+# Hue bridge address and client key (the "username" the bridge returns when
+# you pair a new client). REQUIRED when hue_plugs_enable is true. These are
+# secrets, so set them from vault, e.g. hue_bridge_ip: "{{ vault_hue_bridge_ip
+# | default(lookup('file', playbook_dir ~ '/hue_bridge_ip.txt') | trim, true) }}"
+# (one line per file, same pattern as the OVH DNS tokens).
+hue_bridge_ip: ""
+hue_client_key: ""
+
+# Plugs to manage: a list of {id, name} entries mapping the Hue light ID of a
+# smart plug to a human-readable name (usually the name of the powered
+# device). Light IDs are bridge-local numbers, not stable across bridges;
+# find them with `hue-plugs list` once the config points at the bridge.
+hue_plugs: []
+# Example:
+#   - id: "1"
+#     name: "ai"
+#   - id: "2"
+#     name: "voron0"
+
+# Seconds to wait between powering off and back on for `hue-plugs restart`,
+# so the device behind the plug is actually off before it is powered again.
+hue_restart_delay: 15
+
+# Deployed paths and runtime.
+hue_config_file: "/etc/hue-plugs.conf"
+hue_script_path: "/usr/pkg/bin/hue-plugs.py"
+hue_python: "/usr/pkg/bin/python3.12"
+hue_packages:
+  - python312

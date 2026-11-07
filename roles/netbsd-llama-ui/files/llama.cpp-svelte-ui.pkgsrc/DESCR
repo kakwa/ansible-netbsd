@@ -1,0 +1,5 @@
+llama.cpp-svelte-ui is the official SvelteKit-based Web UI for llama.cpp.
+It provides a modern chat interface for interacting with local LLMs served
+by llama-server. This package contains only the pre-built static files;
+the API backend is expected to be provided separately (e.g. on another
+host, proxied by nginx).

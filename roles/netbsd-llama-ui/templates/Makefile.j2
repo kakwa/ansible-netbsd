@@ -1,0 +1,33 @@
+# pkgsrc overlay: llama.cpp-svelte-ui
+#
+# Downloads a pre-built .deb, extracts the static SvelteKit UI,
+# and installs it under ${PREFIX}/share/llama.cpp-svelte-ui/.
+
+LLAMA_UI_VERSION=	{{ llama_ui_version }}
+
+DISTNAME=	llama.cpp-svelte-ui_${LLAMA_UI_VERSION}-1~amk+deb15_all.deb
+PKGNAME=	llama.cpp-svelte-ui-${LLAMA_UI_VERSION}
+CATEGORIES=	www
+MASTER_SITES=	-https://kakwa.github.io/misc-pkg/deb.sid.amd64/raw/
+MAINTAINER=	kakwa@kakwalab.ovh
+HOMEPAGE=	https://github.com/ggml-org/llama.cpp
+COMMENT=	Static SvelteKit Web UI for llama.cpp
+LICENSE=	mit
+
+# .deb is not auto-extractable by pkgsrc; we handle it in do-install
+NO_EXTRACT=	yes
+NO_BUILD=	yes
+NO_CONFIGURE=	yes
+DISTFILES=	${DISTNAME}
+
+UI_DIR=	share/llama.cpp-svelte-ui
+INSTALLATION_DIRS=	${UI_DIR}
+
+do-install:
+	mkdir -p ${WRKDIR}
+	cd ${WRKDIR} && ar -xf ${DISTDIR}/${DISTNAME}
+	cd ${WRKDIR} && tar -xf data.tar.*
+	cp -r ${WRKDIR}/usr/share/llama.cpp-svelte-ui/. \
+	    ${DESTDIR}${PREFIX}/${UI_DIR}/
+
+.include "../../mk/bsd.pkg.mk"

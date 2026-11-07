@@ -1,0 +1,4 @@
+---
+llama_ui_version: "0.8.0"
+llama_ui_deb_url: "https://kakwa.github.io/misc-pkg/deb.sid.amd64/raw/llama.cpp-svelte-ui_{{ llama_ui_version }}-1~amk+deb15_all.deb"
+llama_ui_prefix: /usr/pkg/share/llama.cpp-svelte-ui

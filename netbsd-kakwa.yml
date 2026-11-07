@@ -62,6 +62,26 @@
         # Target host and MAC address of its NIC (required to send the magic packet).
         waker_target_host: "ai.local"
         waker_target_mac: "A0:36:9F:5B:38:02"
+    - role: netbsd-hue-plugs
+      tags: ["service", "netbsd-hue-plugs"]
+      vars:
+        hue_bridge_ip: "{{ vault_hue_bridge_ip | default(lookup('file', playbook_dir ~ '/hue_bridge_ip.txt') | trim, true) }}"
+        hue_client_key: "{{ vault_hue_client_key | default(lookup('file', playbook_dir ~ '/hue_bridge_key.txt') | trim, true) }}"
+        hue_plugs:
+          - id: "1"
+            name: "Vilebrequin"
+          - id: "2"
+            name: "TV strip"
+          - id: "3"
+            name: "TV left"
+          - id: "4"
+            name: "Desktop strip"
+          - id: "5"
+            name: "Sofa"
+          - id: "6"
+            name: "PlugPcIA"
+    - role: netbsd-llama-ui
+      tags: ["app", "netbsd-llama-ui"]
     - role: netbsd-nginx
       tags: ["service", "netbsd-nginx"]
       vars:
@@ -123,9 +143,12 @@
             domain: "chat.kakwalab.ovh"
             upstream: "https://ai.local/"
             ssl_verify: false
+            # Hybrid mode: static SvelteKit UI served locally, /v1/* proxied
+            template: "hybrid-nginx.conf.j2"
+            static_root: "/usr/pkg/share/llama.cpp-svelte-ui"
             # Wake ai.local through netbsd-waker before proxying
             wake_enabled: true
-            # Chat UI served by the AI service; streaming (SSE) support
+            # Streaming (SSE) support
             streaming: true
             # Backend (ai.local) API key: sent as "Authorization: Bearer <key>"
             # when proxying; clients only need Basic auth

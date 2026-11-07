@@ -1,0 +1,2 @@
+---
+# No handlers needed: hue-plugs is a CLI tool, not a daemon.

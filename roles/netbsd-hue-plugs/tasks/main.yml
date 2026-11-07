@@ -1,0 +1,44 @@
+---
+- name: Check hue-plugs configuration
+  ansible.builtin.assert:
+    that:
+      - hue_bridge_ip | length > 0
+      - hue_client_key | length > 0
+      - hue_plugs | length > 0
+    fail_msg: >-
+      hue_bridge_ip, hue_client_key and hue_plugs must all be set.
+      hue_bridge_ip and hue_client_key are secrets -- set them from vault
+      (e.g. hue_bridge_ip: vault_hue_bridge_ip) or drop hue_bridge_ip.txt
+      and hue_bridge_key.txt next to the playbook (one line each).
+      Set hue_plugs to a list of {id, name} entries.
+      Alternatively set hue_plugs_enable: false to skip this role.
+    quiet: true
+  when: hue_plugs_enable
+
+- name: Install packages for hue-plugs
+  community.general.pkgin:
+    name: "{{ hue_packages }}"
+    state: present
+  when: hue_plugs_enable
+  become: true
+
+- name: Deploy hue-plugs CLI script
+  ansible.builtin.copy:
+    src: hue-plugs.py
+    dest: "{{ hue_script_path }}"
+    owner: root
+    group: wheel
+    mode: '0755'
+  when: hue_plugs_enable
+  become: true
+  tags: [hue-plugs-script]
+
+- name: Deploy hue-plugs config file
+  ansible.builtin.template:
+    src: hue-plugs.conf.j2
+    dest: "{{ hue_config_file }}"
+    owner: root
+    group: wheel
+    mode: '0600'
+  when: hue_plugs_enable
+  become: true
