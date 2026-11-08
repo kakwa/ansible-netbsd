@@ -140,11 +140,12 @@ class Handler(BaseHTTPRequestHandler):
         client = self.client_address[0] if self.client_address else "-"
         original_uri = self.headers.get("X-Original-URI") or "-"
         real_ip = self.headers.get("X-Real-IP") or "-"
-        # Log every request so we can confirm nginx is reaching this endpoint
-        # through its auth_request subrequest, and from which vhost/client.
+        # nginx calls this endpoint on every proxied request, so log each
+        # request at debug level only; wake events are logged at INFO below.
         log(
             "request %s %s from %s (x-original-uri=%s x-real-ip=%s)"
-            % (self.command, self.path, client, original_uri, real_ip)
+            % (self.command, self.path, client, original_uri, real_ip),
+            syslog.LOG_DEBUG,
         )
 
         if path == "/health":

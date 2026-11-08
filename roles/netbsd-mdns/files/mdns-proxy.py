@@ -47,7 +47,7 @@ def create_pid_file(pid_file):
     try:
         with open(pid_file, 'w') as f:
             f.write(str(os.getpid()))
-        log_message(f"Created PID file: {pid_file}")
+        log_message(f"Created PID file: {pid_file}", syslog.LOG_DEBUG)
     except Exception as e:
         log_message(f"Failed to create PID file {pid_file}: {e}", syslog.LOG_ERR)
         sys.exit(1)
@@ -57,7 +57,7 @@ def remove_pid_file(pid_file):
     try:
         if os.path.exists(pid_file):
             os.unlink(pid_file)
-            log_message(f"Removed PID file: {pid_file}")
+            log_message(f"Removed PID file: {pid_file}", syslog.LOG_DEBUG)
     except Exception as e:
         log_message(f"Failed to remove PID file {pid_file}: {e}", syslog.LOG_WARNING)
 
@@ -72,7 +72,7 @@ def create_cached_response(query):
         # Check if we have a cached resolution for this query
         cache_key = f"{qname}:{qtype}"
         if cache_key not in resolution_cache:
-            log_message(f"No cached resolution found for {qname}")
+            log_message(f"No cached resolution found for {qname}", syslog.LOG_DEBUG)
             return None
 
         # Create response message
@@ -149,11 +149,11 @@ def run_proxy():
 
             qname = str(query.question[0].name)
             qtype = dns.rdatatype.to_text(query.question[0].rdtype)
-            log_message(f"Query for {qname} ({qtype}) from {addr}")
+            log_message(f"Query for {qname} ({qtype}) from {addr}", syslog.LOG_DEBUG)
 
             # Forward only .local. domains to mDNS
             if not qname.endswith(".local."):
-                log_message("Non-local query, ignoring")
+                log_message("Non-local query, ignoring", syslog.LOG_DEBUG)
                 continue
 
             # Forward query to mDNS multicast group
@@ -172,28 +172,28 @@ def run_proxy():
                 if len(response.answer) > 0:
                     cache_key = f"{qname}:{query.question[0].rdtype}"
                     resolution_cache[cache_key] = response.answer[0]
-                    log_message(f"Cached resolution for {qname}")
+                    log_message(f"Cached resolution for {qname}", syslog.LOG_DEBUG)
 
                 dns_sock.sendto(response.to_wire(), addr)
-                log_message(f"Sent mDNS response for {qname} to {addr}")
+                log_message(f"Sent mDNS response for {qname} to {addr}", syslog.LOG_DEBUG)
             except socket.timeout:
-                log_message(f"No mDNS reply received for {qname}, checking cache")
+                log_message(f"No mDNS reply received for {qname}, checking cache", syslog.LOG_DEBUG)
                 # Try to send cached response
                 cached_response = create_cached_response(query)
                 if cached_response:
                     dns_sock.sendto(cached_response.to_wire(), addr)
-                    log_message(f"Sent cached response for {qname} to {addr}")
+                    log_message(f"Sent cached response for {qname} to {addr}", syslog.LOG_DEBUG)
                 else:
-                    log_message(f"No cached response available for {qname}")
+                    log_message(f"No cached response available for {qname}", syslog.LOG_DEBUG)
             except Exception as mdns_error:
-                log_message(f"mDNS error for {qname}: {mdns_error}, checking cache")
+                log_message(f"mDNS error for {qname}: {mdns_error}, checking cache", syslog.LOG_WARNING)
                 # Try to send cached response on any mDNS error
                 cached_response = create_cached_response(query)
                 if cached_response:
                     dns_sock.sendto(cached_response.to_wire(), addr)
-                    log_message(f"Sent cached response for {qname} to {addr}")
+                    log_message(f"Sent cached response for {qname} to {addr}", syslog.LOG_DEBUG)
                 else:
-                    log_message(f"No cached response available for {qname}")
+                    log_message(f"No cached response available for {qname}", syslog.LOG_DEBUG)
 
         except socket.timeout:
             # This is expected - allows us to check shutdown_flag periodically

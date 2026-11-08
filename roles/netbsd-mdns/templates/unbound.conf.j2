@@ -30,6 +30,10 @@ server:
     # Allow .local domains to be resolved without DNSSEC
     domain-insecure: "local"
 
+    # Use the kernel-default socket buffer size; unbound's built-in default
+    # (4 MiB) is refused at startup on this system (SO_SNDBUF warning)
+    so-sndbuf: 0
+
 # Forward .local queries to mDNS proxy
 forward-zone:
     name: "local."

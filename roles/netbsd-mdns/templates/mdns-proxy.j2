@@ -2,7 +2,8 @@
 #
 # {{ ansible_managed }}
 # PROVIDE: mdns_proxy
-# REQUIRE: mdnsd unbound
+# REQUIRE: mdnsd named
+# NOTE: the base /etc/rc.d/unbound script PROVIDEs "named", not "unbound"
 # KEYWORD: shutdown
 #
 # Add the following to /etc/rc.conf to enable mdns_proxy:
